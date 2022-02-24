@@ -1,0 +1,15 @@
+Licensed under _your_ choice the following SPDX licenses, 
+whichever makes your integration job easier.
+* Apache-2.0
+* BSD-2-Clause
+* EPL-2.0
+* ISC
+* LGPL-2.0-or-later
+* MIT
+* WTFPL
+* Zlib
+
+Do note that this project includes (or will include?)
+* FreeRTOS.  It has it's own license (MIT)
+* laks. It has it's own license (BSD-2-Clause)
+
