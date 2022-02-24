@@ -1,0 +1,6 @@
+[submodule "extern/laks"]
+	path = extern/laks
+	url = git@github.com:karlp/laks.git
+[submodule "extern/freertos"]
+	path = extern/freertos
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
