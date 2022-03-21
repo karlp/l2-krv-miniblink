@@ -29,6 +29,8 @@ void _reset_handler() {
 Pin led = GPIOA[0];
 #elif defined(GD32V)
 Pin led = GPIOA[7];
+#elif defined(CH58x)
+Pin led = GPIO[(0<<8)|0];  // A0.... we might need some macros to fiddle this...
 #else
 #warning "unspecifed board, defaulting led to PA0"
 Pin led = GPIOA[0];
@@ -58,7 +60,11 @@ void rcc_init();
 int main() {
     rcc_init();
 
+#if defined(CH58x)
+    // GPIOS are always clocked?
+#else
     RCC.enable(rcc::GPIOA);
+#endif
 //    RCC.enable(rcc::USBFS);
 //
 //    usb.init();
@@ -72,6 +78,6 @@ int main() {
 
 	led.toggle();
 
-        sleep(500000);
+        sleep(40000);
     }
 }

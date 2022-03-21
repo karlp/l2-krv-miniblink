@@ -3,8 +3,8 @@ import os.path
 
 env = SConscript('extern/laks/build/env.py')
 #env.SelectMCU('gd32vf103cb')
-env.SelectMCU('ch32v307vct6')
-#env.SelectMCU('ch582m')
+#env.SelectMCU('ch32v307vct6')
+env.SelectMCU('ch582m')
 
 # Gross hack to make cmsis device includes work.  TODO - optionally add in selectMCU?
 #env.Append(CPPDEFINES = ['STM32WB55xx'])
