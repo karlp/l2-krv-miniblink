@@ -6,5 +6,5 @@ goal targets, in this repo or another...
 
 ## Status
 * ch582: blink works, nothing else tried yet
-* ch32v307: blink works, nothing else tried yet
+* ch32v307: blink works, uart works, with interrupts
 * gd32vf103: blink works, but at a fixed speed? something else is weird?

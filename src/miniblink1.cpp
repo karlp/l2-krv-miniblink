@@ -3,8 +3,10 @@
 
 
 #include <gpio/gpio.h>
+#include <interrupt/interrupt.h>
 #include <rcc/flash.h>
 #include <rcc/rcc.h>
+#include <uart/uart.h>
 #include <usb/usb.h>
 #include <usb/generic.h>
 #include <usb/descriptor.h>
@@ -27,6 +29,13 @@ void _reset_handler() {
 
 #if defined(CH32V23)
 Pin led = GPIOA[0];
+#if 0
+Pin utx = GPIOA[2]; // USART2
+Pin urx = GPIOA[3];
+#else
+Pin utx = GPIOA[9]; // USART1 (connected to wch-link on black eval board)
+Pin urx = GPIOA[10];
+#endif
 #elif defined(GD32V)
 Pin led = GPIOA[7];
 #elif defined(CH58x)
@@ -57,6 +66,8 @@ void sleep(int cnt) {
 
 void rcc_init();
 
+volatile uint16_t lol_char;
+
 int main() {
     rcc_init();
 
@@ -73,11 +84,67 @@ int main() {
 
     led.set_mode(Pin::Output);
 
+    utx.set_mode(Pin::AF);
+    urx.set_mode(Pin::AF);
+
+    /*
+        usart_set_baudrate(hw_details.mb_port->usart, ulBaudRate);
+        usart_set_flow_control(hw_details.mb_port->usart, USART_FLOWCONTROL_NONE);
+        usart_set_mode(hw_details.mb_port->usart, USART_MODE_TX_RX);
+
+        usart_set_stopbits(hw_details.mb_port->usart, stop_bits);
+
+	usart_set_parity(hw_details.mb_port->usart, USART_PARITY_NONE);
+        usart_disable_rx_interrupt(hw_details.mb_port->usart);
+        usart_disable_tx_interrupt(hw_details.mb_port->usart);
+        nvic_enable_irq(hw_details.mb_port->nvic_usart);
+        usart_enable(hw_details.mb_port->usart);
+     * */
+
+    RCC.enable(rcc::USART1);
+    uint32_t pclk = 8000000; // default is 8MHz HSI
+    uint32_t baud = 115200;
+    USART1->BRR = (pclk + baud / 2) / baud;
+    USART1->CR1 = (1 << 3) | (1 << 2) | (1 << 13); // TE, RE, UE
+    USART1->CR1 |= (1<<5); // RXNEIE
+    interrupt_ctl.enable(interrupt::irq::USART1);
+    
+    
+    int i = 0;
+    int qq = 0;
     while(1) {
 //        usb.process();
-
-	led.toggle();
-
-        sleep(40000);
+	qq++;
+	if (qq % 80000 == 0) {
+	    led.toggle();
+	    USART1.write_blocking('a' + i % 26);
+	    i++;
+	}
+	if (lol_char) {
+		USART1.write_blocking('[');
+		USART1.write_blocking(lol_char);
+		USART1.write_blocking(']');
+		lol_char = 0;
+	}
+#if 0 // Polled works just fine...
+	// lol, poll that shit...
+	if (USART1->SR & (1<<5)) {
+		uint16_t cc = USART1->DR;
+		USART1.write_blocking('<');
+		USART1.write_blocking(cc);
+		USART1.write_blocking('>');
+	}
+#endif
     }
+
 }
+
+
+
+template <>
+void interrupt::handler<interrupt::irq::USART1>() {
+	if (USART1->SR & (1<<5)) {
+		lol_char = USART1->DR;
+	}
+}
+
