@@ -29,17 +29,16 @@ void _reset_handler() {
 
 #if defined(CH32V23)
 Pin led = GPIOA[0];
-#if 0
-Pin utx = GPIOA[2]; // USART2
-Pin urx = GPIOA[3];
-#else
 Pin utx = GPIOA[9]; // USART1 (connected to wch-link on black eval board)
 Pin urx = GPIOA[10];
-#endif
-#elif defined(GD32V)
-Pin led = GPIOA[7];
+auto rcc_uart = rcc::USART1;
 #elif defined(CH58x)
 Pin led = GPIO[(0<<8)|0];  // A0.... we might need some macros to fiddle this...
+Pin utx = GPIO[(0<<8)|14]; // A14
+Pin urx = GPIO[(0<<8)|15]; // A15
+auto rcc_uart = rcc::UART0;
+#elif defined(GD32V)
+Pin led = GPIOA[7];
 #else
 #warning "unspecifed board, defaulting led to PA0"
 Pin led = GPIOA[0];
@@ -64,6 +63,42 @@ void sleep(int cnt) {
     }
 }
 
+#if defined(CH32V23)
+void uart_enable(void)
+{
+    RCC.enable(rcc_uart);
+    uint32_t pclk = 8000000; // default is 8MHz HSI
+    uint32_t baud = 115200;
+    USART1->BRR = (pclk + baud / 2) / baud;
+    USART1->CR1 = (1 << 3) | (1 << 2) | (1 << 13); // TE, RE, UE
+    USART1->CR1 |= (1<<5); // RXNEIE
+    interrupt_ctl.enable(interrupt::irq::USART1);
+}
+#elif defined(CH58x)
+void uart_enable(void)
+{
+	auto rx_fifo = 0x3; // 7 bytes
+	// Flush and enable fifos. (ie, 16550 mode, not 16450 mode)
+	UART0->FCR = (rx_fifo << 6) | 0x7;
+	UART0->LCR = 0x3; // 8N1
+	UART0->IER = (1<<6); // enable TXD output
+	UART0->DIV = 1;  // "standard" prescaler
+
+	// TODOD - baud calculation depends heavily on sysclock!
+	// you really need to keep on there...
+	// UART0->DL =
+	auto sys = 40e6;
+	auto dl = sys * 2 / 1 / 16 / 115200;
+	UART0->DL = dl;  // 43 for 115200?
+	
+
+}
+#else
+#warning "Unsupported UART platform!"
+void uart_enable(void) {}
+#endif
+
+
 void rcc_init();
 
 volatile uint16_t lol_char;
@@ -72,6 +107,8 @@ int main() {
     rcc_init();
 
 #if defined(CH58x)
+    // PLL480 / 12 == 40MHz clock
+    RCC->CLK_SYS_CFG = (1<<6) | 12;
     // GPIOS are always clocked?
 #else
     RCC.enable(rcc::GPIOA);
@@ -84,30 +121,13 @@ int main() {
 
     led.set_mode(Pin::Output);
 
+#if defined(CH58x)
+#else
     utx.set_mode(Pin::AF);
     urx.set_mode(Pin::AF);
+#endif
 
-    /*
-        usart_set_baudrate(hw_details.mb_port->usart, ulBaudRate);
-        usart_set_flow_control(hw_details.mb_port->usart, USART_FLOWCONTROL_NONE);
-        usart_set_mode(hw_details.mb_port->usart, USART_MODE_TX_RX);
-
-        usart_set_stopbits(hw_details.mb_port->usart, stop_bits);
-
-	usart_set_parity(hw_details.mb_port->usart, USART_PARITY_NONE);
-        usart_disable_rx_interrupt(hw_details.mb_port->usart);
-        usart_disable_tx_interrupt(hw_details.mb_port->usart);
-        nvic_enable_irq(hw_details.mb_port->nvic_usart);
-        usart_enable(hw_details.mb_port->usart);
-     * */
-
-    RCC.enable(rcc::USART1);
-    uint32_t pclk = 8000000; // default is 8MHz HSI
-    uint32_t baud = 115200;
-    USART1->BRR = (pclk + baud / 2) / baud;
-    USART1->CR1 = (1 << 3) | (1 << 2) | (1 << 13); // TE, RE, UE
-    USART1->CR1 |= (1<<5); // RXNEIE
-    interrupt_ctl.enable(interrupt::irq::USART1);
+    uart_enable();
     
     
     int i = 0;
@@ -117,15 +137,23 @@ int main() {
 	qq++;
 	if (qq % 80000 == 0) {
 	    led.toggle();
+#if defined(CH32V23)
 	    USART1.write_blocking('a' + i % 26);
+#elif defined(CH58x)
+	    UART0.write_blocking('a' + i % 26);
+#else
+#warning "unsupported platform"
+#endif
 	    i++;
 	}
+#if 0
 	if (lol_char) {
 		USART1.write_blocking('[');
 		USART1.write_blocking(lol_char);
 		USART1.write_blocking(']');
 		lol_char = 0;
 	}
+#endif
 #if 0 // Polled works just fine...
 	// lol, poll that shit...
 	if (USART1->SR & (1<<5)) {
@@ -140,11 +168,12 @@ int main() {
 }
 
 
-
+#if defined(CH32V23)
 template <>
 void interrupt::handler<interrupt::irq::USART1>() {
 	if (USART1->SR & (1<<5)) {
 		lol_char = USART1->DR;
 	}
 }
+#endif
 
