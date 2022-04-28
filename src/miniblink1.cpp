@@ -96,8 +96,9 @@ void uart_enable(void)
 	auto sys = 60000000u;
 	auto dl = sys * 2 / 1 / 16 / 115200;
 	my_uart->DL = dl;  // 65 for 115200? (with 60Mhz in)
-	
-
+	my_uart->IER |= (1<<0); // RECV_RDY irqs
+	my_uart->MCR |= (1<<3); // peripheral IRQ enable..
+	interrupt_ctl.enable(interrupt::irq::UART1);
 }
 #else
 #warning "Unsupported UART platform!"
@@ -188,11 +189,11 @@ int main() {
 	}
 #if 0 // Polled works just fine...
 	// lol, poll that shit...
-	if (USART1->SR & (1<<5)) {
-		uint16_t cc = USART1->DR;
-		USART1.write_blocking('<');
-		USART1.write_blocking(cc);
-		USART1.write_blocking('>');
+	if (my_uart.rxne()) {
+		uint16_t cc = my_uart.read();
+		my_uart.write_blocking('<');
+		my_uart.write_blocking(cc);
+		my_uart.write_blocking('>');
 	}
 #endif
     }
@@ -207,5 +208,19 @@ void interrupt::handler<interrupt::irq::USART1>() {
 		lol_char = USART1->DR;
 	}
 }
+#elif defined(CH58x)
+template <>
+void interrupt::handler<interrupt::irq::UART1>() {
+	volatile uint8_t flags = my_uart->IIR & 0xf;
+	if (flags == my_uart.RxData || flags == my_uart.RxTimeOut) {
+		lol_char = my_uart.read();
+	} else {
+		// unhandled, might need to read LSR, IIR or MSR!
+		while(1) {
+			asm volatile ("nop");
+		}
+	}
+}
+
 #endif
 
