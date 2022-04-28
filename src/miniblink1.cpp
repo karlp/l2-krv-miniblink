@@ -6,6 +6,7 @@
 #include <interrupt/interrupt.h>
 #include <rcc/flash.h>
 #include <rcc/rcc.h>
+#include <syscfg/syscfg.h>
 #include <uart/uart.h>
 #include <usb/usb.h>
 #include <usb/generic.h>
@@ -32,11 +33,13 @@ Pin led = GPIOA[0];
 Pin utx = GPIOA[9]; // USART1 (connected to wch-link on black eval board)
 Pin urx = GPIOA[10];
 auto rcc_uart = rcc::USART1;
+auto my_uart = USART1;
 #elif defined(CH58x)
 Pin led = GPIO[(0<<8)|0];  // A0.... we might need some macros to fiddle this...
-Pin utx = GPIO[(0<<8)|14]; // A14
-Pin urx = GPIO[(0<<8)|15]; // A15
-auto rcc_uart = rcc::UART0;
+Pin utx = GPIO[(0<<8)|9]; // A9
+Pin urx = GPIO[(0<<8)|8]; // A8
+auto rcc_uart = rcc::UART1;
+auto my_uart = UART1; // connected to P4 on the CH582M-R0-1v0 board
 #elif defined(GD32V)
 Pin led = GPIOA[7];
 #else
@@ -77,19 +80,22 @@ void uart_enable(void)
 #elif defined(CH58x)
 void uart_enable(void)
 {
+//	SYSCFG.unlock_safe();
+//	RCC.enable(rcc_uart);  // FIXME - this is inverted on ch58x!
+
 	auto rx_fifo = 0x3; // 7 bytes
 	// Flush and enable fifos. (ie, 16550 mode, not 16450 mode)
-	UART0->FCR = (rx_fifo << 6) | 0x7;
-	UART0->LCR = 0x3; // 8N1
-	UART0->IER = (1<<6); // enable TXD output
-	UART0->DIV = 1;  // "standard" prescaler
+	my_uart->FCR = (rx_fifo << 6) | 0x7;
+	my_uart->LCR = 0x3; // 8N1
+	my_uart->IER = (1<<6); // enable TXD output
+	my_uart->DIV = 1;  // "standard" prescaler
 
 	// TODOD - baud calculation depends heavily on sysclock!
 	// you really need to keep on there...
-	// UART0->DL =
-	auto sys = 40e6;
+	// my_uart->DL =
+	auto sys = 60000000u;
 	auto dl = sys * 2 / 1 / 16 / 115200;
-	UART0->DL = dl;  // 43 for 115200?
+	my_uart->DL = dl;  // 65 for 115200? (with 60Mhz in)
 	
 
 }
@@ -107,8 +113,34 @@ int main() {
     rcc_init();
 
 #if defined(CH58x)
+#if 1
+#if defined(KSANE)
+    SYSCFG.unlock_safe();
     // PLL480 / 12 == 40MHz clock
-    RCC->CLK_SYS_CFG = (1<<6) | 12;
+    //RCC->CLK_SYS_CFG = (1<<6) | 12;
+    RCC->CLK_SYS_CFG = (1<<6) | 20; // 480/32 => 15MHz
+#else
+    // this is madness...
+    SYSCFG.unlock_safe();
+    RCC->PLL_CONFIG &= ~(1<<5); // undocumented
+    SYSCFG.lock_safe();
+    SYSCFG.unlock_safe();
+    //RCC->CLK_SYS_CFG = (1<<6) | 16; // 30Mhz, either ~4times as fast as specced, or ~double what we see...?
+    RCC->CLK_SYS_CFG = (1<<6) | 8; // 60Mhz, either ~4times as fast as specced, or ~double what we see...?
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	SYSCFG.lock_safe();
+    SYSCFG.unlock_safe();
+    FLASH->CFG = 0x52; // undocumented...
+    SYSCFG.lock_safe();
+    SYSCFG.unlock_safe();
+    RCC->PLL_CONFIG |= (1<<7); // undocumented...  yey...
+    SYSCFG.lock_safe();
+#endif
+#endif
+
     // GPIOS are always clocked?
 #else
     RCC.enable(rcc::GPIOA);
@@ -119,9 +151,11 @@ int main() {
 
     //sleep(10);
 
-    led.set_mode(Pin::Output);
+    led.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
 
 #if defined(CH58x)
+    utx.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
+    urx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
 #else
     utx.set_mode(Pin::AF);
     urx.set_mode(Pin::AF);
@@ -138,22 +172,20 @@ int main() {
 	if (qq % 80000 == 0) {
 	    led.toggle();
 #if defined(CH32V23)
-	    USART1.write_blocking('a' + i % 26);
+	    my_uart.write_blocking('a' + i % 26);
 #elif defined(CH58x)
-	    UART0.write_blocking('a' + i % 26);
+	    my_uart.write_blocking('a' + i % 26);
 #else
 #warning "unsupported platform"
 #endif
 	    i++;
 	}
-#if 0
 	if (lol_char) {
-		USART1.write_blocking('[');
-		USART1.write_blocking(lol_char);
-		USART1.write_blocking(']');
+		my_uart.write_blocking('[');
+		my_uart.write_blocking(lol_char);
+		my_uart.write_blocking(']');
 		lol_char = 0;
 	}
-#endif
 #if 0 // Polled works just fine...
 	// lol, poll that shit...
 	if (USART1->SR & (1<<5)) {
