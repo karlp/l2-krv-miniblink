@@ -129,21 +129,20 @@ uint32_t rcc_set_pll(uint8_t div)
 	// this is madness...
 	SYSCFG.unlock_safe();
 	RCC->PLL_CONFIG &= ~(1 << 5); // undocumented
-	SYSCFG.lock_safe();
+//	SYSCFG.lock_safe();
 	SYSCFG.unlock_safe();
-	//RCC->CLK_SYS_CFG = (1<<6) | 16; // 30Mhz, either ~4times as fast as specced, or ~double what we see...?
 	RCC->CLK_SYS_CFG = (1 << 6) | (div);
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
-	SYSCFG.lock_safe();
+//	SYSCFG.lock_safe();
 	SYSCFG.unlock_safe();
 	FLASH->CFG = flash_cfg; // undocumented...
-	SYSCFG.lock_safe();
+//	SYSCFG.lock_safe();
 	SYSCFG.unlock_safe();
 	RCC->PLL_CONFIG |= (1 << 7); // undocumented...  yey...
-	SYSCFG.lock_safe();
+//	SYSCFG.lock_safe();
 
 	return 480000000u / real_div;
 }
