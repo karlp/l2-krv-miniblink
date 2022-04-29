@@ -51,5 +51,5 @@ sources_shared = []
 #fw = env.Program("miniblink1.elf", ["src/miniblink1.cpp"] )#+ env['LIB_SOURCES'])
 #env.Depends(fw, env['LINK_SCRIPT'])
 
-env.Firmware('miniblink1.elf', [os.path.join('src', x) for x in ['miniblink1.cpp']])
+env.Firmware('miniblink1.elf', [os.path.join('src', x) for x in ['miniblink1.cpp', 'syszyp.cpp']])
 
