@@ -111,6 +111,7 @@ void uart_enable(void)
 void rcc_init();
 
 volatile uint16_t lol_char;
+uint8_t ss;
 
 #if defined(CH58x)
 
@@ -129,20 +130,15 @@ uint32_t rcc_set_pll(uint8_t div)
 	// this is madness...
 	SYSCFG.unlock_safe();
 	RCC->PLL_CONFIG &= ~(1 << 5); // undocumented
-//	SYSCFG.lock_safe();
-	SYSCFG.unlock_safe();
 	RCC->CLK_SYS_CFG = (1 << 6) | (div);
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
-	asm volatile("nop");
-//	SYSCFG.lock_safe();
-	SYSCFG.unlock_safe();
+//	asm volatile("nop");
+//	asm volatile("nop");
+//	asm volatile("nop");
+//	asm volatile("nop");
+	ss = SYSCFG->SAFE_ACCESS_SIG;  // just looking at timing. can be removed.
+	SYSCFG.unlock_safe();  // you _probably_ still need this one!
 	FLASH->CFG = flash_cfg; // undocumented...
-//	SYSCFG.lock_safe();
-	SYSCFG.unlock_safe();
 	RCC->PLL_CONFIG |= (1 << 7); // undocumented...  yey...
-//	SYSCFG.lock_safe();
 
 	return 480000000u / real_div;
 }
@@ -208,12 +204,36 @@ int main()
 	int qq = 0;
 	while (1) {
 		// Will actually crash and restart when div > 24/25!
-		for (auto div = 6; div < 30; div++) {
+		for (auto div = 6; div < 20; div+=2) {
 			uint32_t sys_speed = rcc_set_pll(div);
 			uart_enable(sys_speed);
-			printf("Switched div to %d and sysclock to %lu\n", div, sys_speed);
+			printf("zzz div to %d and sysclock to %lu (ss: %x)\n", div, sys_speed, ss);
+			SYSCFG.unlock_safe();
+			uint8_t ss1 = SYSCFG->SAFE_ACCESS_SIG;
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			uint8_t ss2 = SYSCFG->SAFE_ACCESS_SIG;
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			uint8_t ss3 = SYSCFG->SAFE_ACCESS_SIG;
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			asm volatile ("nop");
+			uint8_t ss4 = SYSCFG->SAFE_ACCESS_SIG;
+			printf("slow? %02x:%02x:%02x:%02x\n", ss1, ss2, ss3, ss4);
 			i = 0;
-			while (i < 26) {
+			while (i < 30) {
 				qq++;
 				if (qq % 80000 == 0) {
 					led.toggle();
