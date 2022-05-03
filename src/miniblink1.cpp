@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
+#include <adc/adc.h>
 #include <gpio/gpio.h>
 #include <interrupt/interrupt.h>
 #include <rcc/flash.h>
@@ -247,6 +248,34 @@ int main()
 					lol_char = 0;
 				}
 			}
+
+			ADC->TEMP |= (1<<7); // enable temperature sensor
+			// ~arbitrary clock selection,
+			uint8_t clk_div = 2;
+			uint8_t pga_gain = 3;
+			// Set RB_ADC_POWER_ON to 1 to enable the ADC,
+			// set RB_ADC_DIFF_EN to 1, 
+			// set RB_ADC_CLK_DIV,
+			// set RB_ADC_BUF_EN to 1,
+			// and set RB_ADC_PGA_GAIN to 11;
+			ADC->CFG = (clk_div << 6) | (pga_gain << 4) | (1<<2) | (1<<1) | (1<<0);
+
+			// Set ADC_START to ... start ;)
+			uint16_t samps[4];
+			for (auto i = 0; i < 4; i++) {
+				ADC->CONVERT = 1;
+				while (ADC->CONVERT);
+				// or, apparently also,
+				//while (!ADC->INT_FLAG & (1<<7));
+				uint16_t data = ADC->DATA;
+				samps[i] = data;
+			}
+
+			printf("ADC temp sensor = %d %d %d %d\n", samps[0], samps[1], samps[2], samps[3]);
+
+
+			
+
 		}
 #if 0 // Polled works just fine...
 		// lol, poll that shit...
