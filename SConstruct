@@ -2,8 +2,6 @@
 import os.path
 
 env = SConscript('extern/laks/build/env.py')
-# this is a local setting, better set here than in laks itself!
-env.SetDefault(TOOLCHAIN = "riscv-none-embed-")
 #env.SelectMCU('gd32vf103cb')
 #env.SelectMCU('ch32v307vct6')
 env.SelectMCU('ch582m')
