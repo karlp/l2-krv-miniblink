@@ -105,6 +105,7 @@
 #define BLE_SNV_ADDR                        0x77E00-FLASH_ROM_MAX_SIZE
 #endif
 #ifndef CLK_OSC32K
+// goog: "Do not modify this item here. It must be modified in the preprocessing in the project configuration. If the host role is included, the external 32K must be used."
 #define CLK_OSC32K                          0   // 该项请勿在此修改，必须在工程配置里的预处理中修改，如包含主机角色必须使用外部32K
 #endif
 #ifndef BLE_MEMHEAP_SIZE

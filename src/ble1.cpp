@@ -147,7 +147,8 @@ tmosEvents wch_handle_events(tmosTaskID task_id, tmosEvents events)
 {
 	uint8_t *msgPtr;
 
-	if (events & SYS_EVENT_MSG) { // ´¦ÀíHAL²ãÏûÏ¢£¬µ÷ÓÃtmos_msg_receive¶ÁÈ¡ÏûÏ¢£¬´¦ÀíÍê³ÉºóÉ¾³ýÏûÏ¢¡£
+	// goog: Process the HAL layer message, call tmos_msg_receive to read the message, and delete the message after processing
+	if (events & SYS_EVENT_MSG) { // 处理HAL层消息，调用tmos_msg_receive读取消息，处理完成后删除消息
 		msgPtr = tmos_msg_receive(task_id);
 		if (msgPtr) {
 			/* De-allocate */
@@ -169,10 +170,10 @@ tmosEvents wch_handle_events(tmosTaskID task_id, tmosEvents events)
 #endif
 	}
 	if (events & HAL_REG_INIT_EVENT) {
-#if(defined BLE_CALIBRATION_ENABLE) && (BLE_CALIBRATION_ENABLE == TRUE) // Ð£×¼ÈÎÎñ£¬µ¥´ÎÐ£×¼ºÄÊ±Ð¡ÓÚ10ms
-		BLE_RegInit(); // Ð£×¼RF
+#if(defined BLE_CALIBRATION_ENABLE) && (BLE_CALIBRATION_ENABLE == TRUE) // 校准任务，单次校准耗时小于10ms
+		BLE_RegInit(); // 校准RF (Calibrate RF)
 #if(CLK_OSC32K)
-		Lib_Calibration_LSI(); // Ð£×¼ÄÚ²¿RC
+		Lib_Calibration_LSI(); // 校准内部RC (Calibrate Internal RC)
 #endif
 		return events ^ HAL_REG_INIT_EVENT;
 #endif
@@ -252,7 +253,8 @@ int main()
 	printf("Created event register: %d\n", halTaskID);
 	// FIXME - still need thhis? HAL_TimeInit();  // I may need this.
 #if(defined BLE_CALIBRATION_ENABLE) && (BLE_CALIBRATION_ENABLE == TRUE)
-    bs = tmos_start_task(halTaskID, HAL_REG_INIT_EVENT, MS1_TO_SYSTEM_TIME(BLE_CALIBRATION_PERIOD)); // ���У׼���񣬵���У׼��ʱС��10ms
+	// goog: "Add calibration tasks, and a single calibration takes less than 10ms"
+	bs = tmos_start_task(halTaskID, HAL_REG_INIT_EVENT, MS1_TO_SYSTEM_TIME(BLE_CALIBRATION_PERIOD)); // 添加校准任务，单次校准耗时小于10ms
     	printf("task start bl reg returned: %d\n", bs);
 
 #endif
