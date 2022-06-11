@@ -12,6 +12,7 @@
 #include <interrupt/interrupt.h>
 #include <rcc/flash.h>
 #include <rcc/rcc.h>
+#include <rtc/rtc.h>
 #include <syscfg/syscfg.h>
 #include <timer/timer.h>
 #include <uart/uart.h>
@@ -226,6 +227,34 @@ void wch_ble_init()
 
 }
 
+void hack_rtc_timer_init(void)
+{
+	SYSCFG.unlock_safe();
+	// R8_CK32K_CONFIG |= RB_CLK_OSC32K_XT | RB_CLK_INT32K_PON | RB_CLK_XT32K_PON;
+	// Select external, but turn on both internal and external? I dunno tom...
+	RCC->CK32K_CONFIG |= (1<<2) | (1<<1) | (1<<0);
+	SYSCFG.lock_safe();
+	
+	// RTC_InitTime(2020, 1, 1, 0, 0, 0); //RTCʱ�ӳ�ʼ����ǰʱ��
+	SYSCFG.unlock_safe();
+
+	// so, days are since 2020-1-1, and then I need a "2 seconds" count
+	// and a "32k clock ticks" count.... yolo that shit right now.
+	int days = 892; // 2022-june-11
+	uint32_t secs2 = 0; // could not care less right now
+	uint32_t ck32ticks = 0; // could not care less right now
+	uint32_t tt = (secs2<<16 | ck32ticks);
+
+	SYSCFG.unlock_safe();
+	RTC->TRIG = days;
+	RTC->MODE_CTRL |= (1<<7); // LOAD_HI
+	SYSCFG.unlock_safe();
+	RTC->TRIG = tt;
+	RTC->MODE_CTRL |= (1<<6); // LOAD_LO
+	SYSCFG.lock_safe();
+
+}
+
 int main()
 {
 	uint32_t sys_speed = rcc_set_pll(8); // 60MHz
@@ -251,7 +280,9 @@ int main()
 	//HAL_Init();
 	tmosTaskID halTaskID = TMOS_ProcessEventRegister(wch_handle_events);
 	printf("Created event register: %d\n", halTaskID);
-	// FIXME - still need thhis? HAL_TimeInit();  // I may need this.
+	// HAL_TimeInit();
+	hack_rtc_timer_init();
+	TMOS_TimerInit(0);
 #if(defined BLE_CALIBRATION_ENABLE) && (BLE_CALIBRATION_ENABLE == TRUE)
 	// goog: "Add calibration tasks, and a single calibration takes less than 10ms"
 	bs = tmos_start_task(halTaskID, HAL_REG_INIT_EVENT, MS1_TO_SYSTEM_TIME(BLE_CALIBRATION_PERIOD)); // 添加校准任务，单次校准耗时小于10ms
