@@ -12,9 +12,9 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-#define	ID_CH583							0x83
+//#define	ID_CH583							0x83
 
-#define CHIP_ID								ID_CH583
+//#define CHIP_ID								ID_CH583
 
 #ifdef CH58xBLE_ROM
 #include "CH58xBLE_ROM.H"
@@ -130,7 +130,7 @@
 #define CENTRAL_MAX_CONNECTION              3
 #endif
 
-extern uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];
+//extern uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];
 extern const uint8_t MacAddr[6];
 
 #endif

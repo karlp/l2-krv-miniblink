@@ -21,13 +21,10 @@
 #include "config.h"
 #include "broadcaster.h"
 
-// IMO, we pass MEM_BUF via the bleConfig_t.MEMAddr, so this is free form, but whateves.
-//extern "C" {
-__attribute__((aligned(4))) uint32_t MEM_BUF[BLE_MEMHEAP_SIZE / 4];
+__attribute__((aligned(4))) uint32_t some_ble_buffer[BLE_MEMHEAP_SIZE / 4];
 const uint8_t MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
 tmosTaskID halTaskID; 
 
-//}
 //// add to laks!!! 
 
 void entry();
@@ -46,11 +43,23 @@ void _reset_handler()
 
 
 #if defined(CH58x)
-Pin led = GPIO[(0 << 8) | 0]; // A0.... we might need some macros to fiddle this...
+#if defined(CH58x_BOARD_DEV)
+Pin led = GPIO[(0 << 8) | 5]; // A5.... we might need some macros to fiddle this...
 Pin utx = GPIO[(0 << 8) | 9]; // A9
 Pin urx = GPIO[(0 << 8) | 8]; // A8
 auto rcc_uart = rcc::UART1;
 auto my_uart = UART1; // connected to P4 on the CH582M-R0-1v0 board
+auto my_uart_irq = interrupt::irq::UART1;
+#elif defined(CH58x_BOARD_VEITTUR)
+Pin led = GPIO[(0 << 8) | 5]; // A5.... we might need some macros to fiddle this...
+Pin utx = GPIO[(1 << 8) | 7]; // B7
+Pin urx = GPIO[(1 << 8) | 4]; // B4
+auto rcc_uart = rcc::UART0;
+auto my_uart = UART0; // connected to P4 on the CH582M-R0-1v0 board
+auto my_uart_irq = interrupt::irq::UART0;
+#else
+#error "unsupported/unknown ch58x board"
+#endif
 #else
 #warning "unspecifed board, defaulting led to PA0"
 Pin led = GPIOA[0];
@@ -91,7 +100,7 @@ void uart_enable(uint32_t sys)
 	my_uart->DL = dl;
 	my_uart->IER |= (1 << 0); // RECV_RDY irqs
 	my_uart->MCR |= (1 << 3); // peripheral IRQ enable..
-	interrupt_ctl.enable(interrupt::irq::UART1);
+	interrupt_ctl.enable(my_uart_irq);
 }
 #else
 #warning "Unsupported UART platform!"
@@ -204,7 +213,7 @@ void wch_ble_init()
 
 
 	bleConfig_t cfg = {0}; // is c++ the with or without 0 form? lol
-	cfg.MEMAddr = (uint32_t) MEM_BUF;
+	cfg.MEMAddr = (uint32_t) some_ble_buffer;
 	cfg.MEMLen = (uint32_t) BLE_MEMHEAP_SIZE;
 	cfg.BufMaxLen = (uint32_t) BLE_BUFF_MAX_LEN;
 	cfg.BufNumber = (uint32_t) BLE_BUFF_NUM;
@@ -303,17 +312,23 @@ int main()
 			printf("tick: %d\n", i++);
 			last = SYSTICK->CNT;
 		}
+		if (lol_char) {
+			my_uart.write_blocking('[');
+			my_uart.write_blocking(lol_char);
+			my_uart.write_blocking(']');
+			lol_char = 0;
+		}
 	}
 
 }
 
 #if defined(CH58x)
 
-template <>
-void interrupt::handler<interrupt::irq::UART1>()
+static void my_uart_handler(void)
 {
 	volatile uint8_t flags = my_uart->IIR & 0xf;
 	if (flags == my_uart.RxData || flags == my_uart.RxTimeOut) {
+		// TODO I think I need to read alllll here...
 		lol_char = my_uart.read();
 	} else {
 		// unhandled, might need to read LSR, IIR or MSR!
@@ -321,6 +336,19 @@ void interrupt::handler<interrupt::irq::UART1>()
 			asm volatile ("nop");
 		}
 	}
+}
+
+// just install them both, fuck it.
+template <>
+void interrupt::handler<interrupt::irq::UART0>()
+{
+	my_uart_handler();
+}
+
+template <>
+void interrupt::handler<interrupt::irq::UART1>()
+{
+	my_uart_handler();
 }
 
 #endif
