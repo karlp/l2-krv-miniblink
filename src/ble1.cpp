@@ -51,12 +51,16 @@ auto rcc_uart = rcc::UART1;
 auto my_uart = UART1; // connected to P4 on the CH582M-R0-1v0 board
 auto my_uart_irq = interrupt::irq::UART1;
 #elif defined(CH58x_BOARD_VEITTUR)
-Pin led = GPIO[(0 << 8) | 5]; // A5.... we might need some macros to fiddle this...
+Pin led = GPIO[(0 << 8) | 14]; // A14.... we might need some macros to fiddle this...
 Pin utx = GPIO[(1 << 8) | 7]; // B7
 Pin urx = GPIO[(1 << 8) | 4]; // B4
-auto rcc_uart = rcc::UART0;
-auto my_uart = UART0; // connected to P4 on the CH582M-R0-1v0 board
-auto my_uart_irq = interrupt::irq::UART0;
+Pin p1rx = GPIO[(0 << 8) | 8]; // A8
+auto rcc_uart_u = rcc::UART0;
+auto rcc_uart_p1 = rcc::UART1;
+auto my_uart_u = UART0;
+auto my_uart_p1 = UART1;
+auto my_uart_irq_u = interrupt::irq::UART0;
+auto my_uart_irq_p1 = interrupt::irq::UART1;
 #else
 #error "unsupported/unknown ch58x board"
 #endif
@@ -72,9 +76,9 @@ extern "C" int _write(int file, char* ptr, int len)
 	if (file == STDOUT_FILENO || file == STDERR_FILENO) {
 		for (i = 0; i < len; i++) {
 			if (ptr[i] == '\n') {
-				my_uart.write_blocking('\r');
+				my_uart_u.write_blocking('\r');
 			}
-			my_uart.write_blocking(ptr[i]);
+			my_uart_u.write_blocking(ptr[i]);
 		}
 		return i;
 	}
@@ -84,23 +88,22 @@ extern "C" int _write(int file, char* ptr, int len)
 
 #if defined(CH58x)
 
-void uart_enable(uint32_t sys)
+void uart_enable(x16550_UART_t<x16550_UART_reg_t> u, uint32_t sys, int baud)
 {
 	//	SYSCFG.unlock_safe();
 	//	RCC.enable(rcc_uart);  // FIXME - this is inverted on ch58x!
 
 	auto rx_fifo = 0x3; // 7 bytes
 	// Flush and enable fifos. (ie, 16550 mode, not 16450 mode)
-	my_uart->FCR = (rx_fifo << 6) | 0x7;
-	my_uart->LCR = 0x3; // 8N1
-	my_uart->IER = (1 << 6); // enable TXD output
-	my_uart->DIV = 1; // "standard" prescaler
+	u->FCR = (rx_fifo << 6) | 0x7;
+	u->LCR = 0x3; // 8N1
+	u->IER = (1 << 6); // enable TXD output
+	u->DIV = 1; // "standard" prescaler
 
-	auto dl = sys * 2 / 1 / 16 / 115200;
-	my_uart->DL = dl;
-	my_uart->IER |= (1 << 0); // RECV_RDY irqs
-	my_uart->MCR |= (1 << 3); // peripheral IRQ enable..
-	interrupt_ctl.enable(my_uart_irq);
+	auto dl = sys * 2 / 1 / 16 / baud;
+	u->DL = dl;
+	u->IER |= (1 << 0); // RECV_RDY irqs
+	u->MCR |= (1 << 3); // peripheral IRQ enable..
 }
 #else
 #warning "Unsupported UART platform!"
@@ -270,8 +273,14 @@ int main()
 #if defined(CH58x)
 	utx.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
 	urx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
+	p1rx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
 #endif
-	uart_enable(sys_speed);
+	uart_enable(my_uart_u, sys_speed, 115200);
+	uart_enable(my_uart_p1, sys_speed, 115200);
+	//interrupt_ctl.enable(my_uart_irq_u);
+	interrupt_ctl.enable(my_uart_irq_p1);
+
+
 	printf("Booted at %lu\n", sys_speed);
 
 	led.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
@@ -313,9 +322,9 @@ int main()
 			last = SYSTICK->CNT;
 		}
 		if (lol_char) {
-			my_uart.write_blocking('[');
-			my_uart.write_blocking(lol_char);
-			my_uart.write_blocking(']');
+			my_uart_u.write_blocking('[');
+			my_uart_u.write_blocking(lol_char);
+			my_uart_u.write_blocking(']');
 			lol_char = 0;
 		}
 	}
@@ -326,10 +335,10 @@ int main()
 
 static void my_uart_handler(void)
 {
-	volatile uint8_t flags = my_uart->IIR & 0xf;
-	if (flags == my_uart.RxData || flags == my_uart.RxTimeOut) {
+	volatile uint8_t flags = my_uart_p1->IIR & 0xf;
+	if (flags == my_uart_p1.RxData || flags == my_uart_p1.RxTimeOut) {
 		// TODO I think I need to read alllll here...
-		lol_char = my_uart.read();
+		lol_char = my_uart_p1.read();
 	} else {
 		// unhandled, might need to read LSR, IIR or MSR!
 		while (1) {
