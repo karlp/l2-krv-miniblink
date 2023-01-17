@@ -9,6 +9,9 @@ env.SelectMCU('ch582m')
 # Gross hack to make cmsis device includes work.  TODO - optionally add in selectMCU?
 #env.Append(CPPDEFINES = ['STM32WB55xx'])
 
+env.Append(CPPDEFINES = ["CH582_DEV_BOARD"])
+#env.Append(CPPDEFINES = ["K_VEITTUR"])
+
 env.SetOption("num_jobs", 8) # TODO - get this from the system
 
 env.Append(
