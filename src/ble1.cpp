@@ -25,22 +25,6 @@ __attribute__((aligned(4))) uint32_t some_ble_buffer[BLE_MEMHEAP_SIZE / 4];
 const uint8_t MacAddr[6] = {0x84, 0xC2, 0xE4, 0x03, 0x02, 0x02};
 tmosTaskID halTaskID; 
 
-//// add to laks!!! 
-
-void entry();
-extern int _ram_end;
-
-[[gnu::naked]]
-[[gnu::section(".vectors")]]
-void _reset_handler()
-{
-	// Initialize stack pointer.
-	asm volatile("lui sp, %%hi(%0); add sp, sp, %%lo(%0)" ::"i"(&_ram_end));
-	// Absolute jump to entry function.
-	asm volatile("jr %0" ::"m"(entry));
-}
-//// add to laks end....
-
 
 #if defined(CH58x)
 #if defined(CH58x_BOARD_DEV)
