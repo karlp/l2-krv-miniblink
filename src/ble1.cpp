@@ -31,9 +31,9 @@ tmosTaskID halTaskID;
 Pin led = GPIO[(0 << 8) | 5]; // A5.... we might need some macros to fiddle this...
 Pin utx = GPIO[(0 << 8) | 9]; // A9
 Pin urx = GPIO[(0 << 8) | 8]; // A8
-auto rcc_uart = rcc::UART1;
-auto my_uart = UART1; // connected to P4 on the CH582M-R0-1v0 board
-auto my_uart_irq = interrupt::irq::UART1;
+auto rcc_uart_u = rcc::UART1;
+auto my_uart_u = UART1; // connected to P4 on the CH582M-R0-1v0 board
+auto my_uart_u_irq = interrupt::irq::UART1;
 #elif defined(CH58x_BOARD_VEITTUR)
 Pin led = GPIO[(0 << 8) | 14]; // A14.... we might need some macros to fiddle this...
 Pin utx = GPIO[(1 << 8) | 7]; // B7
@@ -43,8 +43,8 @@ auto rcc_uart_u = rcc::UART0;
 auto rcc_uart_p1 = rcc::UART1;
 auto my_uart_u = UART0;
 auto my_uart_p1 = UART1;
-auto my_uart_irq_u = interrupt::irq::UART0;
-auto my_uart_irq_p1 = interrupt::irq::UART1;
+auto my_uart_u_irq = interrupt::irq::UART0;
+auto my_uart_p1_irq = interrupt::irq::UART1;
 #else
 #error "unsupported/unknown ch58x board"
 #endif
@@ -257,12 +257,12 @@ int main()
 #if defined(CH58x)
 	utx.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
 	urx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
-	p1rx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
+//	p1rx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
 #endif
 	uart_enable(my_uart_u, sys_speed, 115200);
-	uart_enable(my_uart_p1, sys_speed, 115200);
-	//interrupt_ctl.enable(my_uart_irq_u);
-	interrupt_ctl.enable(my_uart_irq_p1);
+//	uart_enable(my_uart_p1, sys_speed, 115200);
+	interrupt_ctl.enable(my_uart_u_irq);
+//	interrupt_ctl.enable(my_uart_p1_irq);
 
 
 	printf("Booted at %lu\n", sys_speed);
@@ -319,10 +319,10 @@ int main()
 
 static void my_uart_handler(void)
 {
-	volatile uint8_t flags = my_uart_p1->IIR & 0xf;
-	if (flags == my_uart_p1.RxData || flags == my_uart_p1.RxTimeOut) {
+	volatile uint8_t flags = my_uart_u->IIR & 0xf;
+	if (flags == my_uart_u.RxData || flags == my_uart_u.RxTimeOut) {
 		// TODO I think I need to read alllll here...
-		lol_char = my_uart_p1.read();
+		lol_char = my_uart_u.read();
 	} else {
 		// unhandled, might need to read LSR, IIR or MSR!
 		while (1) {
