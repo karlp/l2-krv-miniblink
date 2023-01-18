@@ -284,6 +284,10 @@ int main()
 	printf("zzz div set and sysclock to %lu (ss: %x)\n", sys_speed, ss);
 
 	spi_init();
+	uint8_t spi_buf[24];
+	for (unsigned i = 0; i < sizeof(spi_buf); i++) {
+		spi_buf[i] = 0xa0 | i;
+	}
 
 	int i = 0;
 	int qq = 0;
@@ -294,7 +298,9 @@ int main()
 			uint8_t x = 'A' + i % 26;
 			my_uart.write_blocking(x);
 			spi_cs.off();
-			my_spi.transfer_byte(x);
+			//my_spi.transfer_byte(x);
+			my_spi.send_block_dma(spi_buf, sizeof(spi_buf));
+			while (!(my_spi->INT_FLAG & (1<<0)));
 			spi_cs.on();
 			i++;
 		}
