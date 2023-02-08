@@ -55,4 +55,5 @@ sources_shared = []
 #env.Depends(fw, env['LINK_SCRIPT'])
 
 env.Firmware('miniblink1.elf', [os.path.join('src', x) for x in ['miniblink1.cpp', 'syszyp.cpp']])
+env.Firmware('timer-piezo1.elf', [os.path.join('src', x) for x in ['timer-piezo1.cpp', 'syszyp.cpp']])
 
