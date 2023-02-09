@@ -26,10 +26,12 @@ auto rcc_uart = rcc::UART1;
 auto my_uart = UART1; // connected to P4 on the CH582M-R0-1v0 board
 auto my_uart_irq = interrupt::irq::UART1;
 
-// PB3 == PWM9 _alternate_
-Pin pz1 = GPIO[(1<<8) | 3]; // B3
+// PB2/3 == PWM8/9 _alternate_
+Pin pz1 = GPIO[(1<<8) | 2]; // B2
+Pin pz2 = GPIO[(1<<8) | 3]; // B3
 auto my_pwm = PWM;
-auto my_pwm_ch = 9;
+auto my_pwm_ch1 = 8;
+auto my_pwm_ch2 = 9;
 #else
 #error "unknown ch58x board"
 #endif
@@ -155,12 +157,29 @@ int main()
 
 
 	pz1.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
+	pz2.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
 	GPIO->ALTERNATE |= (1<<10); // remaps pwm4,5,7,8,9!
 	// This is actually 1MHZ for the whole set, so with 256steps
 	// you get 3.91kHz.  You can use 5..8 bits of step data.
+	int full = 0;
+	//full = 256;
+	full = 32;
 	my_pwm->CLOCK_DIV = 80;  // 1MHz seems like plenty for right now
-	my_pwm.set(my_pwm_ch, 256/4); // let's got for 25/75 for starters?
-	my_pwm.enable(my_pwm_ch);
+	my_pwm.set(my_pwm_ch1, full/4); // let's got for 25/75 for starters?
+	my_pwm.enable(my_pwm_ch1);
+	my_pwm.set(my_pwm_ch2, full/4);
+	my_pwm.enable(my_pwm_ch2);
+	my_pwm.polarity_active_low(my_pwm_ch2, false);
+	// "Interleaved" "staggered"
+	// appears to halve the clock rate,
+	// without interleaved, 1mhz = 256, div 4, you get
+	// 256usecs period, with 64usecs high, both channels phase locked
+	// with interleaved, you _still_ get 64usec pulses on each channel,
+	// but now they're twice as far apart, 512usecs period, with the
+	// other channel firing at 256usecs.  
+	//my_pwm->CONFIG |= (1<<6);
+	my_pwm.data_bits(PWM.Five);
+	//my_pwm->CONFIG |= 1; // n-1 cycles... if you need that sort of thing.
 
 
 	int i = 0;
