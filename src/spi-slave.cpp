@@ -196,7 +196,7 @@ int main()
 	rcc_init();
 	for (auto i = 0; i < 10; i++) {
 		// Spi regs == 0x6606 for register 6...
-		spi_periph_regs[i] = i << 12 | i << 8 | i;
+		spi_periph_regs[i] = 0xa << 12 | i << 8 | i << 4 | 0x5;
 	}
 
 #if defined(CH58x)
@@ -256,7 +256,8 @@ void interrupt::handler<interrupt::irq::SPI0>()
 	// turn off interrupts event? (here, or in periph?)
 	interrupt_ctl.disable(my_spi_irq);
 	my_spi_busy = true;
-	uint8_t incmd = my_spi->BUFFER; // should be first byte?
+	// must read from fifo, not BUFFER to properly count
+	uint8_t incmd = my_spi->FIFO;
 	my_spi.fifo_out(true);
 	uint8_t reg = incmd & 0x3f;
 	my_spi->FIFO = spi_periph_regs[reg] >> 8;
