@@ -186,10 +186,11 @@ void spi_init_slave(void)
 	// cmd mode vs datastream mode (CTRL_MOD
 }
 
-volatile uint8_t spi_req;
+volatile uint8_t my_spi_req;
 volatile uint16_t spi_periph_regs[10];
 auto spi_rxb = etl::circular_buffer<uint8_t, 10>();
-volatile bool my_spi_busy = false;
+volatile bool my_spi_busy_tx = false;
+volatile bool my_spi_busy_rx = false;
 
 int main()
 {
@@ -235,15 +236,27 @@ int main()
 			printf("tick: %d\n", i);
 			i++;
 		}
-		if (my_spi_busy) {
-			// not _quite_ we hang here?! but it keeps running?!
+		if (my_spi_busy_tx) {
 			while (my_spi->FIFO_COUNT != 0)
 				;
-			my_spi_busy = false;
+			my_spi_busy_tx = false;
 			// return to input mode
 			my_spi.fifo_out(false);
 			interrupt_ctl.enable(my_spi_irq);
 		}
+		if (my_spi_busy_rx) {
+			// ideally should validate nothing remainining in fifo?
+			// ideally should reset on every CS release?
+			if (my_spi->FIFO_COUNT == 2) {
+				// lol, is this legit? just run fast and wait til we have what we expect?
+				uint8_t a = my_spi->FIFO;
+				uint8_t b = my_spi->FIFO;
+				spi_periph_regs[my_spi_req] = a << 8 | b;
+				my_spi_busy_rx = false;
+				interrupt_ctl.enable(my_spi_irq);
+			}
+		}
+
 	}
 
 }
@@ -255,13 +268,20 @@ void interrupt::handler<interrupt::irq::SPI0>()
 	my_spi->INT_FLAG = (1<<7); // clear FST_BYTE
 	// turn off interrupts event? (here, or in periph?)
 	interrupt_ctl.disable(my_spi_irq);
-	my_spi_busy = true;
 	// must read from fifo, not BUFFER to properly count
 	uint8_t incmd = my_spi->FIFO;
-	my_spi.fifo_out(true);
 	uint8_t reg = incmd & 0x3f;
-	my_spi->FIFO = spi_periph_regs[reg] >> 8;
-	my_spi->FIFO = spi_periph_regs[reg] & 0xff;
+	if (incmd & 0x80) {
+		// leave the fifo in IN mode, mark us as busy, and let
+		// task space read it out and take action
+		my_spi_busy_rx = true;
+		my_spi_req = reg;
+	} else {
+		my_spi_busy_tx = true;
+		my_spi.fifo_out(true);
+		my_spi->FIFO = spi_periph_regs[reg] >> 8;
+		my_spi->FIFO = spi_periph_regs[reg] & 0xff;
+	}
 }
 
 
