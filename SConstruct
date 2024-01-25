@@ -4,12 +4,13 @@ import os.path
 env = SConscript('extern/laks/build/env.py')
 #env.SelectMCU('gd32vf103cb')
 #env.SelectMCU('ch32v307vct6')
-env.SelectMCU('ch582m')
+env.SelectMCU('k70fn1m0vmj12')
 
 # Gross hack to make cmsis device includes work.  TODO - optionally add in selectMCU?
 #env.Append(CPPDEFINES = ['STM32WB55xx'])
 
-env.Append(CPPDEFINES = ["CH582_DEV_BOARD"])
+#env.Append(CPPDEFINES = ["CH582_DEV_BOARD"])
+env.Append(CPPDEFINES = ["TWRK70"])
 #env.Append(CPPDEFINES = ["K_VEITTUR"])
 
 env.SetOption("num_jobs", 8) # TODO - get this from the system
@@ -57,7 +58,8 @@ sources_shared = []
 #fw = env.Program("miniblink1.elf", ["src/miniblink1.cpp"] )#+ env['LIB_SOURCES'])
 #env.Depends(fw, env['LINK_SCRIPT'])
 
-env.Firmware('miniblink1.elf', [os.path.join('src', x) for x in ['miniblink1.cpp', 'syszyp.cpp']])
-env.Firmware('spi-slave.elf', [os.path.join('src', x) for x in ['spi-slave.cpp', 'syszyp.cpp']])
-env.Firmware('timer-piezo1.elf', [os.path.join('src', x) for x in ['timer-piezo1.cpp', 'syszyp.cpp']])
+#env.Firmware('miniblink1.elf', [os.path.join('src', x) for x in ['miniblink1.cpp', 'syszyp.cpp']])
+env.Firmware('kminiblink.elf', [os.path.join('src', x) for x in ['kminiblink1.cpp', 'plain_main.c', 'syszyp.cpp']])
+#env.Firmware('spi-slave.elf', [os.path.join('src', x) for x in ['spi-slave.cpp', 'syszyp.cpp']])
+#env.Firmware('timer-piezo1.elf', [os.path.join('src', x) for x in ['timer-piezo1.cpp', 'syszyp.cpp']])
 
