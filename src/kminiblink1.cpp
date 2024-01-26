@@ -11,16 +11,19 @@
 // #include <syscfg/syscfg.h>
 // #include <uart/uart.h>
 
+#include <nxp_kx/sim.h>
+#include <nxp_kx/wdog.h>
+#include <gpio/gpio.h>
 
+//#if defined(TWRK70)
+// Pin led0 = GPIOA[11]; // orange
+// Pin led1 = GPIOA[28]; // yellow
+// Pin led2 = GPIOA[29]; // green
+// Pin led3 = GPIOA[10];  // Blue
 
-#if defined(TWRK70)
-// Pin led = GPIOA[10];  // Blue
-// Pin led2 = GPIOA[11]; // orange
-// Pin led3 = GPIOA[29]; // green
-
-#else
-#warning "unspecifed board, defaulting led to PA0"
-#endif
+// #else
+// #warning "unspecifed board, defaulting led to PA0"
+// #endif
 
 extern "C" {
 	extern int plain_main(void);
@@ -28,7 +31,35 @@ extern "C" {
 
 int main()
 {
+	WDOG.unlock();
+	WDOG.disable();
 	// lol
+	SIM.enable(sim::PORTA);
+	SIM.enable(sim::PORTB);
+	SIM.enable(sim::PORTC);
+	SIM.enable(sim::PORTD);
+	SIM.enable(sim::PORTE);
+	SIM.enable(sim::PORTF);
+
+	PCRA.mux(10, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+	PCRA.mux(28, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+	PCRA.mux(29, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+	PCRA.mux(11, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+
+	// led0.set_out();
+	// led0.off;
+
+	// int qq = 0;
+	// while (1) {
+	// 	qq++;
+	// 	if (qq % 80000 == 0) {
+	// 		led0.toggle();
+	// 	}
+	// }
+	// FIXME - this is gross.  want to use a ?friend? class
+	// or something to get the right info out of the "Pin"?
+
+
 	plain_main();
 }
 
