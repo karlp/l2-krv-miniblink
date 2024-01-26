@@ -22,7 +22,7 @@ int plain_main(void)
 	// LED2_EN;
 	// LED3_EN;
 
-	GPIOA_PDDR=GPIO_PDDR_PDD(GPIO_PIN(10) | GPIO_PIN(11) | GPIO_PIN(28) | GPIO_PIN(29) );  // this was missing!
+	//GPIOA_PDDR=GPIO_PDDR_PDD(GPIO_PIN(10) | GPIO_PIN(11) | GPIO_PIN(28) | GPIO_PIN(29) );  // this was missing!
 
 	LED0_OFF;
 	LED1_ON;
