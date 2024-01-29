@@ -59,7 +59,7 @@ sources_shared = []
 #env.Depends(fw, env['LINK_SCRIPT'])
 
 #env.Firmware('miniblink1.elf', [os.path.join('src', x) for x in ['miniblink1.cpp', 'syszyp.cpp']])
-env.Firmware('kminiblink.elf', [os.path.join('src', x) for x in ['kminiblink1.cpp', 'plain_main.c', 'syszyp.cpp']])
+env.Firmware('kminiblink.elf', [os.path.join('src', x) for x in ['kminiblink1.cpp', 'plain_main.c', 'syszyp.cpp', "stdio-itm.cpp"]])
 #env.Firmware('spi-slave.elf', [os.path.join('src', x) for x in ['spi-slave.cpp', 'syszyp.cpp']])
 #env.Firmware('timer-piezo1.elf', [os.path.join('src', x) for x in ['timer-piezo1.cpp', 'syszyp.cpp']])
 

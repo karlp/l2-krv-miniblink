@@ -30,16 +30,27 @@ extern "C" {
 	extern int plain_main(void);
 }
 
-int main()
-{
+extern void laks_entry(void);
+
+void entry(void) {
+	// MUST be early!
 	WDOG.unlock();
 	WDOG.disable();
+
+	laks_entry();	
+}
+
+int main()
+{
+	// Too late to turn off watchdog here!
+
 	uint8_t reason0 = RCM->SRS0;
 	uint8_t reason1 = RCM->SRS1;
 	if (reason0 == 0x42 && reason1 == 0x69) {
 		while (1)
 		;
 	}
+	printf("boot reset reasons: %x %x\n", reason0, reason1);
 	// lol
 	SIM.enable(sim::PORTA);
 	SIM.enable(sim::PORTB);
@@ -60,7 +71,7 @@ int main()
 	led2.set_out();
 	led3.set_out();
 	led0.off();
-	led1.off	();
+	led1.on();
 	led2.off();
 	led3.on();
 
@@ -68,6 +79,7 @@ int main()
 	while (1) {
 		qq++;
 		if (qq % 800000 == 0) {
+			printf("tick: %d\n", qq);
 			led0.toggle();
 			led1.toggle();
 			led2.toggle();
@@ -80,6 +92,6 @@ int main()
 	// 	q++;
 	// }
 
-	plain_main();
+//	plain_main();
 }
 
