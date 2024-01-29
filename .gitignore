@@ -1,0 +1,8 @@
+.sconsign.dblite
+*.o
+*.elf
+
+# python common venv names
+.env*
+venv*
+.venv*
