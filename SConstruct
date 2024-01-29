@@ -44,7 +44,7 @@ env.Append(
 
 sources_freertos = [os.path.join("${FREERTOS}/", x) for x in Split("list.c queue.c tasks.c timers.c")]
 sources_freertos += ["${FREERTOS_PORT}/port.c"]
-sources_freertos += ["${FREERTOS}/portable/MemMang/heap_1.c"]
+sources_freertos += ["${FREERTOS}/portable/MemMang/heap_4.c"]
 
 # ETL installation
 env.Append(CPPPATH=["#extern/etl/include"])
