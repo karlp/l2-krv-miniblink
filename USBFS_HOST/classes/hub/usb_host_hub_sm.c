@@ -311,6 +311,7 @@ static void usb_host_hub_device_sm
     	    else
     	        i = USB_SPEED_FULL;
     	    
+            printf("hub-addr\n");
             usb_dev_list_attach_device(
                 ((USB_HUB_CLASS_INTF_STRUCT_PTR) hub_instance->CLASS_INTF.class_intf_handle)->G.host_handle,
                 i, /* port speed */
@@ -364,7 +365,7 @@ static void usb_host_hub_device_sm
     	case HUB_GET_PORT_STATUS_ASYNC:
     	{
     	    uint_32 stat = utoh32((uint_8 _PTR_) buffer);
-    	    
+    	    printf("hub-async: ev %x\n", stat);
             /* register the current status of the port */
             (hub_instance->HUB_PORTS + hub_instance->port_iterator)->STATUS = stat;
     

@@ -22,6 +22,7 @@
     static uint_8 bdt[512] = { 1 };
   #else
     #warning "No compiler defined"
+    static uint8_t bdt[512] __attribute__((aligned(512))) = { 1 };
   #endif
 #endif
 
@@ -690,6 +691,7 @@ void _usb_khci_task(void) {
                 switch (msg.type) {
                     case TR_MSG_SETUP:
     //                        msg.pipe_desc->NEXTDATA01 = 0; done in upper layer
+                        printf("setup\n");
 
 //                      _usb_khci_atom_tr(TR_CTRL, usb_host_state_struct_ptr->speed, msg.pipe_desc,&msg.pipe_tr->setup_packet, 8);
                       _usb_khci_atom_tr(TR_CTRL, usb_host_state_struct_ptr->speed, msg.pipe_desc, (uint_8*)&msg.pipe_tr->setup_packet, 8);
@@ -813,7 +815,7 @@ void _usb_khci_task(void) {
     
     if ((khci_event.VALUE & KHCI_EVENT_MASK)) {
         /* some event occurred */
-        
+        printf("khci_ev: %x\n", khci_event.VALUE);
         if (khci_event.VALUE & KHCI_EVENT_ATTACH) {     /* device attached */
         	USB0_ADDR = 0;
 
@@ -850,9 +852,11 @@ void _usb_khci_task(void) {
 
         	if (USB0_ISTAT & USB_ISTAT_ATTACH_MASK) {
         	    /* device attached */
+                printf("ev-att\n");
         	}
         	else {
         	  /* device detached */
+                printf("ev-DE\n");
             usb_dev_list_detach_device((ptr)usb_host_state_struct_ptr, 0, 0);
             /* TODO: some deinitialization and clearing in KHCI
             **

@@ -40,9 +40,9 @@ extern "C" int _lseek(int file, int offset, int whence) {
 //extern "C" int _kill(int pid, int sig) {
 //    return -1;
 //}
-//extern "C" int _exit() {
-//    while(1) {}
-//}
+extern "C" void _exit(int status) {
+   while(1) {}
+}
 //extern "C" int _fini() {
 //    return 0;
 //}

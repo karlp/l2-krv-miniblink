@@ -141,6 +141,7 @@ static void  usb_host_cntrl_transaction_done
          break;
       case DEVSTATE_ADDR_SET:     /* address set */
          pipe_ptr->DEVICE_ADDRESS = dev_inst_ptr->address;
+         printf("dev addr set: %d\n", pipe_ptr->DEVICE_ADDRESS);
          
          /* Notify device driver of USB device's new address */
          status = _usb_host_update_device_address_call_interface (usb_host_ptr, pipe_ptr);
@@ -265,6 +266,7 @@ static void  usb_host_cntrl_transaction_done
 
       case DEVSTATE_SET_CFG:     /* config descriptor [0..8] */
 
+         printf("dev set cfg\n");
          /* Point to the memory owned by this device */
          desc.pntr = &dev_inst_ptr->memlist->payload;
          dev_inst_ptr->state = DEVSTATE_CFG_READ;
@@ -281,6 +283,7 @@ static void  usb_host_cntrl_transaction_done
 
       case DEVSTATE_CFG_READ:     /* full config desc. read in */
          dev_inst_ptr->state = DEVSTATE_APP_CALL;
+         printf("dev cfg read\n");
 
          /* Scan the configuration descriptor to find out the total 
          ** number of interfaces available. This will be the upper 

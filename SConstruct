@@ -10,7 +10,7 @@ env.SelectMCU('k70fn1m0vmj12')
 #env.Append(CPPDEFINES = ['STM32WB55xx'])
 
 #env.Append(CPPDEFINES = ["CH582_DEV_BOARD"])
-env.Append(CPPDEFINES = ["TWRK70"])
+env.Append(CPPDEFINES = ["TWRK70", "TWR_K70F120M"])
 #env.Append(CPPDEFINES = ["K_VEITTUR"])
 
 env.SetOption("num_jobs", 8) # TODO - get this from the system
@@ -19,6 +19,10 @@ env.Append(
 	CXXFLAGS = Split('-fcoroutines -Wno-volatile'),
 	LINKFLAGS = Split('--specs=nano.specs'),
 )
+
+# env.Append(
+#     LINKFLAGS = Split('-Wl,--print-gc-sections  -Wl,--print-map-discarded')
+# )
 
 freertos_arch = {
 	"cortex-m7f": "ARM_CM7/r0p1",
@@ -63,3 +67,25 @@ env.Firmware('kminiblink.elf', [os.path.join('src', x) for x in ['kminiblink1.cp
 #env.Firmware('spi-slave.elf', [os.path.join('src', x) for x in ['spi-slave.cpp', 'syszyp.cpp']])
 #env.Firmware('timer-piezo1.elf', [os.path.join('src', x) for x in ['timer-piezo1.cpp', 'syszyp.cpp']])
 
+
+# we're being gross here and not using any of scons's layered stuff, just hard hammering in here...
+usbfshost_files = []
+usbfshost_files += Glob("USBFS_HOST/bsp/*.c")
+usbfshost_files += Glob("USBFS_HOST/classes/*/*.c")
+usbfshost_files += Glob("USBFS_HOST/common/*.c")
+usbfshost_files += Glob("USBFS_HOST/driver/*.c")
+usbfshost_files += Glob("USBFS_HOST/host_common/*.c")
+usbfshost_files += Glob("USBFS_HOST/*.c")
+env.Append(
+    CPPPATH =[
+        "USBFS_HOST/common",
+        "USBFS_HOST/bsp",
+        "USBFS_HOST/host_common",
+        "USBFS_HOST/driver",
+        "USBFS_HOST/classes/common",
+        "USBFS_HOST/classes/hid",
+        "USBFS_HOST/classes/hub",
+        ]
+)
+
+env.Firmware("kusbfshost.elf", [os.path.join("src", x) for x in ["kusbfs_host_main.cpp", "syszyp.cpp", "stdio-itm.cpp"]] + usbfshost_files)

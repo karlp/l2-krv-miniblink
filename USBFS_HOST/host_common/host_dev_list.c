@@ -157,6 +157,7 @@ USB_STATUS usb_dev_list_get_memory
    
    if (dev_ptr->memlist == NULL) {
       dev_ptr->memlist = mem_ptr;
+      printf("init memlist %x\n", mem_ptr);
    } else {
       list_ptr = dev_ptr->memlist;
 
@@ -164,6 +165,7 @@ USB_STATUS usb_dev_list_get_memory
          list_ptr = list_ptr->next;
 
       list_ptr->next = mem_ptr;   
+      printf("add to memlist %x\n", mem_ptr);
    } /* EndIf */
 
    mem_ptr->next = NULL;

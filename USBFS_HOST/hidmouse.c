@@ -50,6 +50,7 @@
 //#include <MCF51Z128.h>
 #include "common.h"
 
+#include "sysinit.h"
 #if (defined _MCF51MM256_H) || (defined _MCF51JE256_H)
 #include "exceptions.h"
 #endif
@@ -133,9 +134,10 @@ HID_COMMAND         main_hid_com;
 #define __RESET_WATCHDOG()  (void)(WDOG_REFRESH = 0xA602, WDOG_REFRESH = 0xB480)
 #define __UNLOCK_WATCHDOG() (void)(WDOG_UNLOCK = 0xC520, WDOG_UNLOCK = 0xD928)
 
-void main(void) 
+void kk_main(void) 
 {
   
+  sysinit();
   static USB_STATUS status = USB_OK;
  
 
@@ -159,7 +161,7 @@ void main(void)
 
   //sci1_init();
 
-  //TimerInit();
+  TimerInit();
 
   printf("Timer Init OK\n\r");
   

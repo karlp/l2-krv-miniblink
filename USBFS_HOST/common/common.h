@@ -19,7 +19,18 @@
 /* 
  * Include the generic CPU header file 
  */
-#include "arm_cm4.h"
+//#include "arm_cm4.h"
+#include <stdint.h>
+
+#define EnableInterrupts asm(" CPSIE i");
+
+  /*!< Macro to disable all interrupts. */
+#define DisableInterrupts asm(" CPSID i");
+
+typedef uint8_t uint8;
+typedef uint16_t uint16;
+typedef uint32_t uint32;
+
 
 /* 
  * Include the platform specific header file 
@@ -59,13 +70,12 @@
 #elif (defined(IAR))
   #include "iar.h"
 #else
-#warning "No toolchain specific header included"
+//#warning "No toolchain specific header included"
 #endif
 
 /* 
  * Include common utilities
  */
-#include "startup.h"
 #include <stdlib.h>
 
 #if (defined(IAR))

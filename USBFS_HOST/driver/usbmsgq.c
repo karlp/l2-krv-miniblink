@@ -35,7 +35,7 @@
 #include "khci.h"
 
 USB_MSGQ_ELEMENT element_array[10];
-uint_32 index, countsen, countrec;
+uint_32 kkindex, countsen, countrec;
 
 extern USBMSGQ_STRUCT tr_que;
 
@@ -65,7 +65,7 @@ uint_32 _usb_msgq_init
   tr_que.SIZE = msg_size;
   tr_que.MAX_SIZE = num_messages;
   tr_que.CURRENT_SIZE = 0;
-  index = 0;
+  kkindex = 0;
   
   return USB_MSGQ_OK;
 }
@@ -100,9 +100,9 @@ uint_32 _usb_msgq_send
   //if (NULL == new_element_ptr){
   //   return USB_MSGQ_SEND_ERROR;
   //}
-  index++;
-  if(10 == index) index = 0;
-  new_element_ptr = &element_array[index];
+  kkindex++;
+  if(10 == kkindex) kkindex = 0;
+  new_element_ptr = &element_array[kkindex];
   
   
   /* copy data from message to new element */
