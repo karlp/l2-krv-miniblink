@@ -76,6 +76,7 @@ usbfshost_files += Glob("USBFS_HOST/common/*.c")
 usbfshost_files += Glob("USBFS_HOST/driver/*.c")
 usbfshost_files += Glob("USBFS_HOST/host_common/*.c")
 usbfshost_files += Glob("USBFS_HOST/*.c")
+usbfshost_files += Glob("k70/*.c")
 env.Append(
     CPPPATH =[
         "USBFS_HOST/common",
@@ -89,3 +90,15 @@ env.Append(
 )
 
 env.Firmware("kusbfshost.elf", [os.path.join("src", x) for x in ["kusbfs_host_main.cpp", "syszyp.cpp", "stdio-itm.cpp"]] + usbfshost_files)
+
+usbfsdev_files = []
+usbfsdev_files += Glob("USBFS_device/*.c")
+usbfsdev_files += Glob("k70/*.c")
+env.Append(
+    CPPPATH =[
+        "USBFS_device",
+        "k70",
+        ]
+)
+
+env.Firmware("kusbfsdev.elf", [os.path.join("src", x) for x in ["kusbfs_dev_main.cpp", "syszyp.cpp", "stdio-itm.cpp"]] + usbfsdev_files)

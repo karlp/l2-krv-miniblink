@@ -187,8 +187,8 @@ void sysinit (void)
   	 * that we expect.
   	 */
 //	trace_clk_init();
-// 	clkout_init();
-#ifdef DDR_INIT        
+    clkout_init();
+#ifdef DDR_INIT
     /* Initialize the DDR if the project option if defined */
      #ifdef DDR2
         twr_ddr2_script_init();

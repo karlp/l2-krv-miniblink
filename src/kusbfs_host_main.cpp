@@ -11,6 +11,7 @@
 // #include <syscfg/syscfg.h>
 // #include <uart/uart.h>
 
+#include <nxp_kx/osc.h>
 #include <nxp_kx/rcm.h>
 #include <nxp_kx/sim.h>
 #include <nxp_kx/wdog.h>
@@ -64,6 +65,7 @@ int main()
 	SIM.enable(sim::PORTF);
 
 	printf("jumping to original\n");
+	printf("osc0/1 is %x/%x\n", OSC0->CR, OSC1->CR);
 	kk_main();
 }
 
