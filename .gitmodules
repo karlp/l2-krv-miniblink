@@ -7,3 +7,6 @@
 [submodule "extern/etl"]
 	path = extern/etl
 	url = https://github.com/ETLCPP/etl.git
+[submodule "extern/tinyusb"]
+	path = extern/tinyusb
+	url = ../tinyusb.git
