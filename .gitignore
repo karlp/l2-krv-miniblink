@@ -1,6 +1,7 @@
 .sconsign.dblite
 *.o
 *.elf
+build/
 
 # python common venv names
 .env*

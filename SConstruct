@@ -6,9 +6,9 @@ import os.path
 Board = collections.namedtuple("Board", "brd part led1 led1_enable")
 boards_kx = [
     # TODO enable these other badbois
- #   Board("TWR-K70F120M", "mk70fn1m0vmj12", "GPIOA[11]", "sim::PORTA"), # orange led
+    Board("TWR-K70F120M", "mk70fn1m0vmj12", "GPIOA[11]", "sim::PORTA"), # orange led
  #   Board("FRDM-K66", "mk66fn2m0vmd18", "GPIOA[11]", "sim::PORTA"), # Blue led on RGB
-    Board("FRDM-K64", "MK64FN1M0VLL12", "GPIOB[2]", "sim::PORTB"), # Blue led on RGB
+    Board("FRDM-K64", "MK64FN1M0VLL12", "GPIOB[21]", "sim::PORTB"), # Blue led on RGB
 ]
 
 freertos_arch = {
@@ -58,12 +58,11 @@ for b in boards_kx:
     sources_freertos = [os.path.join("${FREERTOS}/", x) for x in Split("list.c queue.c tasks.c timers.c")]
     sources_freertos += ["${FREERTOS_PORT}/port.c"]
     sources_freertos += ["${FREERTOS}/portable/MemMang/heap_4.c"]
-    print("ok, srcs so far are", sources_freertos   )
-    #objs_freertos = [env.Object(target=f"{bdir}/{f}.o", src=f"{f}") for f in sources_freertos]
+    objs_freertos = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in sources_freertos]
 
     env.Append(CPPPATH="#src")
     minib_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["miniblink-freertos.cpp", "syszyp.cpp"]]
-    env.Firmware(f"miniblink-freertos-{b.brd}.elf", minib_objs + sources_freertos, variant_dir=bdir)
+    env.Firmware(f"miniblink-freertos-{b.brd}.elf", minib_objs + objs_freertos, variant_dir=bdir)
 
 
 
