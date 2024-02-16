@@ -59,7 +59,7 @@ for b in boards_kx:
     )
     fr_src = [os.path.join("${FREERTOS}/", x) for x in Split("list.c queue.c tasks.c timers.c")]
     fr_src += ["${FREERTOS_PORT}/port.c"]
-    fr_src += ["${FREERTOS}/portable/MemMang/heap_4.c"]  # tinyusb doesn't use this!
+    #fr_src += ["${FREERTOS}/portable/MemMang/heap_4.c"]  # tinyusb doesn't use this!
     fr_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in fr_src]
 
     # Right now, we're just sneakily grabbing it ahead of time out of the tusb repo, we know they have it.
@@ -68,9 +68,9 @@ for b in boards_kx:
     env.Append(CPPPATH="#extern/tinyusb/lib/SEGGER_RTT/RTT")
 
     # woudl need to remove cpppath again, cant' clone the env as that makes dups for the laks files.. just comment it out
-    env.Append(CPPPATH="#src")
-    minib_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["miniblink-freertos.cpp", "syszyp.cpp", "stdio-rtt.cpp"]]
-    env.Firmware(f"miniblink-freertos-{b.brd}.elf", minib_objs + fr_objs + rtt_objs, variant_dir=bdir)
+    #env.Append(CPPPATH="#src")
+    #minib_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["miniblink-freertos.cpp", "syszyp.cpp", "stdio-rtt.cpp"]]
+    #env.Firmware(f"miniblink-freertos-{b.brd}.elf", minib_objs + fr_objs + rtt_objs, variant_dir=bdir)
 
 
     # let's gooooo!
@@ -115,31 +115,30 @@ for b in boards_kx:
     tu_src = tu_lib + tu_example
     #print("wat?", tu_src)
     tu_objs = []
-    #tu_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in tu_src]
+    tu_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in tu_src]
     print("yo, for reals, what's in our obj list?", [f[0].path for f in tu_objs])
     # ok, why doesn't it work for the globbed ones?
     #tu_objs += [env.Object(target=f"{bdir}/{f.path}", src=f"#{f.path}") for f in tu_lib]
-    # env.Append(
-    #     CPPPATH=[
-    #         "${TINYUSB}/src",
-    #         "${TINYUSB}/hw",
-    #         # Remember,  python tools/get_deps.py kinetis_k first to make this work!
-    #         #"${TINYUSB}/hw/mcu/nxp/mcux-sdk/devices/%s" % (b.mcuxinc), # lol, no!
-    #         "src/mcux-stub",
-    #         "${TINYUSB}/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily     
-    #         "${TINYUSB}/examples/host/cdc_msc_hid_freertos/src",  # for tusb_config.h
-    #         "src/tueh/cdc_msc_hid_freertos",
+    env.Append(
+        CPPPATH=[
+            "${TINYUSB}/src",
+            "${TINYUSB}/hw",
+            # Remember,  python tools/get_deps.py kinetis_k first to make this work!
+            #"${TINYUSB}/hw/mcu/nxp/mcux-sdk/devices/%s" % (b.mcuxinc), # lol, no!
+            "src/mcux-stub",
+            "${TINYUSB}/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily     
+            "${TINYUSB}/examples/host/cdc_msc_hid_freertos/src",  # for tusb_config.h
+            "src/tueh/cdc_msc_hid_freertos",
 
-    #     ]
-    # )
+        ]
+    )
 
     env.Append(CPPDEFINES=[
         ("CFG_TUSB_MCU", b.tu_mcu),
         ("CFG_TUSB_DEBUG", 2),  # This is the LOG=n level in tinyusb make vars.
         f"CPU_{b.part.upper()}",
     ])
-    #app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/tueh/cdc_msc_hid_freertos/{f}") for f in ["main.cpp"]]
-    #app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-itm.cpp"]]
-    # We're goign to get RTT going on the mini demo first!
-    # env.Firmware(f"tue_h_cdc_msc_hid_freertos-{b.brd}.elf", tu_objs + app_objs + fr_objs)
+    app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/tueh/cdc_msc_hid_freertos/{f}") for f in ["main.cpp"]]
+    app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-rtt.cpp"]]
+    env.Firmware(f"tue_h_cdc_msc_hid_freertos-{b.brd}.elf", tu_objs + app_objs + fr_objs + rtt_objs)
     
