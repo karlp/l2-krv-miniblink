@@ -151,10 +151,18 @@ void laks_clock_config_for_usb_k64()
 		;
 	}
 	// Disable, but configure
-	int prdiv0 = 20;
+	// k70 wants 8-16Mhz for pll ref,a nd only has 3 bits anyway..
+#ifdef CPU_MK70FN1M0VMJ12
+	int prdiv0 = 5; // = 10Mhz pllref  divider range is 1..8
+	int vdiv0 = 24; // => 240MHz output  there's a /2 afterwards on k70.... range is 16--47times.
+	int vdiv_correction = 16;
+#else
+	int prdiv0 = 20; // this is for k64, which needs 2-4Mhz pll ref.
 	int vdiv0 = 48;
+	int vdiv_correction = 24;
+#endif
 	MCG->C5 = 0 | ((prdiv0 - 1) << 0);
-	MCG->C6 = (MCG->C6 & ~(0x1f << 0)) | ((vdiv0 - 24) << 0);
+	MCG->C6 = (MCG->C6 & ~(0x1f << 0)) | ((vdiv0 - vdiv_correction) << 0);
 	// Enable pll
 	MCG->C5 |= (1 << 6);
 	while (!(MCG->S & (1 << 6)))
@@ -195,6 +203,7 @@ void laks_clock_config_for_usb_k64()
 	int ufrac = 2;
 	SIM->CLKDIV2 = ((udiv - 1) << 1) | ((ufrac - 1) << 0);
 	// USBSRC=fll|pll|irc48 + pllfllsel = pll
+	// ALSO; FOR K70, USBFSRC is extra bits[22,23] but at zero, should be identical, ie, use pllfllsel.
 	SIM->SOPT2 = (SIM->SOPT2 & ~((1 << 18) | (3 << 16))) | (1 << 18) | (1 << 16);
 	SIM.enable(sim::USBFS);
 
@@ -212,9 +221,30 @@ void board_init()
 
 	// FIXME - this is gross.  want to use a ?friend? class
 	// we need to assign the right "PRCx" from the led1 pin?
+	// HACK HACK HACK
+#ifdef CPU_MK70FN1M0VMJ12
+	PCRA.mux(led1.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+#else
 	PCRB.mux(led1.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+#endif
 
 	led1.set_out();
+	uint32_t sdid = SIM->SDID;
+	int fam = (sdid >> 4) & 0x7;
+	int pinid = sdid & 0xf;
+	int revid = (sdid >> 12) & 0xf;
+	switch (fam)
+	{
+	case 0x5:
+		printf("alive on K70 family, pins: %d, revid: %d\n", pinid, revid);
+		break;
+	case 0x4:
+		printf("alive on K6x family, pins: %d, revid: %d\n", pinid, revid);
+		break;
+	default:
+		printf("unimplemented, not decoding sdid: %lx\n", sdid);
+		break;
+	}
 
 	laks_clock_config_for_usb_k64();
 	SystemCoreClock = 120000000;
