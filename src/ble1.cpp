@@ -55,6 +55,7 @@ Pin led = GPIO[(0 << 8) | 14]; // A14.... we might need some macros to fiddle th
 Pin utx = GPIO[(1 << 8) | 7]; // B7
 Pin urx = GPIO[(1 << 8) | 4]; // B4
 Pin p1rx = GPIO[(0 << 8) | 8]; // A8
+Pin p1req = GPIO[(0<<8) | 12]; // PA12
 auto rcc_uart_u = rcc::UART0;
 auto rcc_uart_p1 = rcc::UART1;
 auto my_uart_u = UART0;
@@ -275,6 +276,7 @@ int main()
 	urx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
 	p1rx.set_mode(Pin::Input, Pin::Pull::Up, Pin::Drive::Low5);
 #endif
+	p1req.set_mode(Pin::Output, Pin::Pull::Floating, Pin::Drive::Low5);
 	uart_enable(my_uart_u, sys_speed, 115200);
 	uart_enable(my_uart_p1, sys_speed, 115200);
 	//interrupt_ctl.enable(my_uart_irq_u);
@@ -315,6 +317,7 @@ int main()
 	//Main_Circulation();
 	uint64_t last = SYSTICK->CNT;
 
+	p1req.set(true);
 	while (1) {
 		TMOS_SystemProcess();
 		if (SYSTICK->CNT - last > 30000000) {
