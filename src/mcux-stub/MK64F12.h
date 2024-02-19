@@ -4,7 +4,7 @@
 typedef enum IRQn
 {
      /* Device specific interrupts */
-     USB0_IRQn = 33, /**< USB OTG interrupt */
+     USB0_IRQn = 53, /**< USB OTG interrupt */
 } IRQn_Type;
 
 #define __FPU_PRESENT 1    /**< Defines if an FPU is present or not */
