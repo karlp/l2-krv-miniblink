@@ -20,6 +20,9 @@ env.Append(
 
 env.Append(CPPPATH = "/home/karlp/src/wch-ch583.git/EVT/EXAM/BLE/LIB/")
 
+# Attempt to fix builds on gcc11+
+env.Append(CXXFLAGS = "-misa-spec=2.2")
+
 #fw = env.Program("miniblink1.elf", [os.path.join("src", x) for x in ["miniblink1.cpp"] + sources_shared] + sources_freertos + env['LIB_SOURCES'])
 #fw = env.Program("miniblink1.elf", ["src/miniblink1.cpp"] )#+ env['LIB_SOURCES'])
 #env.Depends(fw, env['LINK_SCRIPT'])
