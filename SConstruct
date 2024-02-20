@@ -9,6 +9,7 @@ boards_kx = [
     Board("TWR-K70F120M", "mk70fn1m0vmj12", "GPIOA[11]", "sim::PORTA", "OPT_MCU_KINETIS_K", "MK70F12"), # orange led
  #   Board("FRDM-K66", "mk66fn2m0vmd18", "GPIOA[11]", "sim::PORTA"), # Blue led on RGB
     Board("FRDM-K64", "MK64FN1M0VLL12", "GPIOB[21]", "sim::PORTB", "OPT_MCU_KINETIS_K", "MK64F12"), # Blue led on RGB
+    Board("V2400F", "MK70FN1M0VMJ15", "GPIOE[24]", "sim::PORTE", "OPT_MCU_KINETIS_K", "MK70F12"), # "activity"
 ]
 
 # Add __NVIC_PRIO_BITS and a systemcoreclock? to board vars?
@@ -116,7 +117,7 @@ for b in boards_kx:
     #print("wat?", tu_src)
     tu_objs = []
     tu_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in tu_src]
-    print("yo, for reals, what's in our obj list?", [f[0].path for f in tu_objs])
+    #print("yo, for reals, what's in our obj list?", [f[0].path for f in tu_objs])
     # ok, why doesn't it work for the globbed ones?
     #tu_objs += [env.Object(target=f"{bdir}/{f.path}", src=f"#{f.path}") for f in tu_lib]
     env.Append(

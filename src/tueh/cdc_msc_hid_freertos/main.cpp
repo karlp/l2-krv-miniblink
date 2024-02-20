@@ -43,6 +43,8 @@ StaticTimer_t blinky_tmdef;
 
 StackType_t usb_host_stack[USBH_STACK_SIZE];
 StaticTask_t usb_host_taskdef;
+StackType_t task_late_stack[configMINIMAL_STACK_SIZE];
+StaticTask_t task_late_handle;
 #endif
 
 TimerHandle_t blinky_tm;
@@ -65,6 +67,8 @@ extern bool tuh_max3421_reg_write(uint8_t rhport, uint8_t reg, uint8_t data, boo
 #endif
 
 Pin led1 = GPIO_LED1;
+Pin usb_reset = GPIOD[11]; // only valid on m2400
+Pin pswitch = GPIOB[4];	   // only on m2400
 
 #if 0
 const mcg_config_t mcgConfig_BOARD_BootClockRUN =
@@ -152,7 +156,7 @@ void laks_clock_config_for_usb_k64()
 	}
 	// Disable, but configure
 	// k70 wants 8-16Mhz for pll ref,a nd only has 3 bits anyway..
-#ifdef CPU_MK70FN1M0VMJ12
+#if defined(CPU_MK70FN1M0VMJ12) || defined(CPU_MK70FN1M0VMJ15)
 	int prdiv0 = 5; // = 10Mhz pllref  divider range is 1..8
 	int vdiv0 = 24; // => 240MHz output  there's a /2 afterwards on k70.... range is 16--47times.
 	int vdiv_correction = 16;
@@ -198,6 +202,14 @@ void laks_clock_config_for_usb_k64()
 	// CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, SIM_USB_CLK_120000000HZ);
 	// kCLOCK_UsbSrcPll0   = SIM_SOPT2_USBSRC(1U) | SIM_SOPT2_PLLFLLSEL(1U), /*!< Use PLL0.      */
 	SIM.disable(sim::USBFS);
+#if defined(CPU_MK70FN1M0VMJ15)
+	// LOL, 48Mhz oscillator on board as well...
+	// usbclk = external + pllfllsel = pll. (leave it alone?)
+	SIM->SOPT2 = (SIM->SOPT2 & ~((1 << 18) | (3 << 16))) | (0 << 18) | (1 << 16);
+	// this... _shouldn't_ matter, as we don't _have_ to be on the "same" 48Mhz clock as the external hub, but... maybe?
+
+#else
+
 	// 120 * 2 / 5 == 48
 	int udiv = 5;
 	int ufrac = 2;
@@ -205,6 +217,7 @@ void laks_clock_config_for_usb_k64()
 	// USBSRC=fll|pll|irc48 + pllfllsel = pll
 	// ALSO; FOR K70, USBFSRC is extra bits[22,23] but at zero, should be identical, ie, use pllfllsel.
 	SIM->SOPT2 = (SIM->SOPT2 & ~((1 << 18) | (3 << 16))) | (1 << 18) | (1 << 16);
+#endif
 	SIM.enable(sim::USBFS);
 
 	// Turn off the MPU so that the usb peripheral can access transfer buffers!
@@ -214,6 +227,13 @@ void laks_clock_config_for_usb_k64()
 
 void board_init()
 {
+	// just make sure, we have a few thigns we're poking, it's not all tied to the miniblink repo now.
+	SIM.enable(sim::PORTA);
+	SIM.enable(sim::PORTB);
+	SIM.enable(sim::PORTC);
+	SIM.enable(sim::PORTD);
+	SIM.enable(sim::PORTE);
+	//	SIM.enable(sim::PORTF); only k70 has portf, and none of our k70 boards use it anyway.
 
 #ifdef RCC_ENABLE1
 	SIM.enable(RCC_ENABLE1);
@@ -224,6 +244,24 @@ void board_init()
 	// HACK HACK HACK
 #ifdef CPU_MK70FN1M0VMJ12
 	PCRA.mux(led1.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+#elif defined(CPU_MK70FN1M0VMJ15)
+	PCRE.mux(led1.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+
+	// M2400 has a 48MHz external oscillator feeding us on USB_CLKIN, _if we wish_
+	PCRE.mux(26, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt7);
+
+	// Set up a pin to control the onboard hub's reset pin.
+	SIM.enable(sim::PORTD);
+	PCRD.mux(usb_reset.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+	usb_reset.set_out();
+	// try just leaving it as is, on by default...
+	usb_reset.on();
+	// usb_reset.off();  // all it to be on out of the box, and we just stall ourselves
+
+	// The config switch, for a basic UI...
+	PCRB.mux(pswitch.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
+	pswitch.set_in();
+
 #else
 	PCRB.mux(led1.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
 #endif
@@ -311,6 +349,29 @@ void entry(void)
 	laks_entry();
 }
 
+static void task_late_start(void *pvParameters)
+{
+	// usb_reset.off();
+	(void)pvParameters;
+	// for (int i = 0; i < 10; i++)
+	// {
+	// 	vTaskDelay(pdMS_TO_TICKS(1000));
+	// 	printf("Waiting to start USB: %d\n", i);
+	// }
+	// Allow pushing the button to turn on/off the onboard hub.
+	bool reset = true;
+	while (1)
+	{
+		if (!pswitch.get())
+		{
+			reset = !reset;
+			usb_reset.set(reset);
+			printf("toggle usb_reset to: %s\n", reset ? "true" : "false");
+		}
+		vTaskDelay(pdMS_TO_TICKS(500));
+	}
+}
+
 int main()
 {
 	board_init();
@@ -321,9 +382,12 @@ int main()
 #if configSUPPORT_STATIC_ALLOCATION
 	blinky_tm = xTimerCreateStatic(NULL, pdMS_TO_TICKS(BLINK_MOUNTED), true, NULL, led_blinky_cb, &blinky_tmdef);
 	xTaskCreateStatic(usb_host_task, "usbh", USBH_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, usb_host_stack, &usb_host_taskdef);
+	xTaskCreateStatic(task_late_start, "late", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, task_late_stack, &task_late_handle);
 #else
+#error "This path isn't actually used"
 	blinky_tm = xTimerCreate(NULL, pdMS_TO_TICKS(BLINK_NOT_MOUNTED), true, NULL, led_blinky_cb);
 	xTaskCreate(usb_host_task, "usbd", USBH_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
+	xTaskCreate(task_late_start, "xlate", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
 #endif
 
 	xTimerStart(blinky_tm, 0);
@@ -340,6 +404,13 @@ int main()
 static void usb_host_task(void *param)
 {
 	(void)param;
+
+	// Just wait for bit before starting.  This makes the
+	for (int i = 0; i < 5; i++)
+	{
+		vTaskDelay(pdMS_TO_TICKS(200));
+		printf("TU WAIT USB: %d\n", i);
+	}
 
 	// init host stack on configured roothub port
 	tuh_init(BOARD_TUH_RHPORT);
