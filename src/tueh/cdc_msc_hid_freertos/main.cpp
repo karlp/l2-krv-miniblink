@@ -202,7 +202,7 @@ void laks_clock_config_for_usb_k64()
 	// CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcPll0, SIM_USB_CLK_120000000HZ);
 	// kCLOCK_UsbSrcPll0   = SIM_SOPT2_USBSRC(1U) | SIM_SOPT2_PLLFLLSEL(1U), /*!< Use PLL0.      */
 	SIM.disable(sim::USBFS);
-#if defined(CPU_MK70FN1M0VMJ15)
+#if defined(NONO_CPU_MK70FN1M0VMJ15)
 	// LOL, 48Mhz oscillator on board as well...
 	// usbclk = external + pllfllsel = pll. (leave it alone?)
 	SIM->SOPT2 = (SIM->SOPT2 & ~((1 << 18) | (3 << 16))) | (0 << 18) | (1 << 16);
@@ -248,7 +248,7 @@ void board_init()
 	PCRE.mux(led1.n, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt1_GPIO);
 
 	// M2400 has a 48MHz external oscillator feeding us on USB_CLKIN, _if we wish_
-	PCRE.mux(26, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt7);
+	// PCRE.mux(26, NXP_PCR_KX_t<NXP_PCR_KX_reg_t>::Alt7);
 
 	// Set up a pin to control the onboard hub's reset pin.
 	SIM.enable(sim::PORTD);
