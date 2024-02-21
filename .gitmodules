@@ -1,6 +1,6 @@
 [submodule "extern/laks"]
 	path = extern/laks
-	url = git@github.com:karlp/laks.git
+	url = ssh://git@bitbucket-tp.mymarel.com:7999/~karl.palsson/laks.git
 [submodule "extern/freertos"]
 	path = extern/freertos
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
@@ -9,4 +9,4 @@
 	url = https://github.com/ETLCPP/etl.git
 [submodule "extern/tinyusb"]
 	path = extern/tinyusb
-	url = ../tinyusb.git
+	url = ssh://git@bitbucket-tp.mymarel.com:7999/~karl.palsson/laks.git
