@@ -9,4 +9,4 @@
 	url = https://github.com/ETLCPP/etl.git
 [submodule "extern/tinyusb"]
 	path = extern/tinyusb
-	url = ssh://git@bitbucket-tp.mymarel.com:7999/~karl.palsson/laks.git
+	url = ssh://git@bitbucket-tp.mymarel.com:7999/~karl.palsson/tinyusb.git
