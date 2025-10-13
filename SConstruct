@@ -60,7 +60,7 @@ for b in boards_kx:
     )
     fr_src = [os.path.join("${FREERTOS}/", x) for x in Split("list.c queue.c tasks.c timers.c")]
     fr_src += ["${FREERTOS_PORT}/port.c"]
-    #fr_src += ["${FREERTOS}/portable/MemMang/heap_4.c"]  # tinyusb doesn't use this!
+    fr_src += ["${FREERTOS}/portable/MemMang/heap_4.c"]  # tinyusb doesn't use this!
     fr_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in fr_src]
 
     # Right now, we're just sneakily grabbing it ahead of time out of the tusb repo, we know they have it.
@@ -70,80 +70,80 @@ for b in boards_kx:
     env.Append(CPPDEFINES=[("LOGGER_RTT", 1)])
 
     # woudl need to remove cpppath again, cant' clone the env as that makes dups for the laks files.. just comment it out
-    #env.Append(CPPPATH="#src")
-    #minib_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["miniblink-freertos.cpp", "syszyp.cpp", "stdio-rtt.cpp"]]
-    #env.Firmware(f"miniblink-freertos-{b.brd}.elf", minib_objs + fr_objs + rtt_objs, variant_dir=bdir)
+    env.Append(CPPPATH="#src")
+    minib_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["miniblink-freertos.cpp", "syszyp.cpp", "stdio-rtt.cpp"]]
+    env.Firmware(f"miniblink-freertos-{b.brd}.elf", minib_objs + fr_objs + rtt_objs, variant_dir=bdir)
 
 
     # let's gooooo!
-    env.SetDefault(TINYUSB="#extern/tinyusb")
+    # env.SetDefault(TINYUSB="#extern/tinyusb")
 
-    # Ok. here comes the bangers...
-    tu_lib = []
-    # I can't figure out how to make  this play properly with the variant dir, but it works fine with explicit names.
-    # somethign to do with the ${TINYUSB} getting expanded or not, and how it detects where to copy shit.
-    # tu_lib += env.Glob("${TINYUSB}/src/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/common/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/host/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/class/cdc/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/class/hid/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/class/hid/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/class/msc/*.c", source=True)
-    # tu_lib += env.Glob("${TINYUSB}/src/portable/nxp/khci/*.c", source=True)
-    tu_lib += [
-        '${TINYUSB}/src/tusb.c',
-        '${TINYUSB}/src/common/tusb_fifo.c',
-        '${TINYUSB}/src/host/hub.c',
-        '${TINYUSB}/src/host/usbh.c',
-        '${TINYUSB}/src/class/cdc/cdc_device.c',
-        '${TINYUSB}/src/class/cdc/cdc_host.c',
-        '${TINYUSB}/src/class/cdc/cdc_rndis_host.c',
-        '${TINYUSB}/src/class/hid/hid_device.c',
-        '${TINYUSB}/src/class/hid/hid_host.c',
-        '${TINYUSB}/src/class/msc/msc_device.c',
-        '${TINYUSB}/src/class/msc/msc_host.c',
-        '${TINYUSB}/src/portable/nxp/khci/dcd_khci.c',
-        '${TINYUSB}/src/portable/nxp/khci/hcd_khci.c',
-        # but we now need it because it has the freertos hooksss, so we need to work with it's rtt configs...
-        '${TINYUSB}/hw/bsp/board.c', # lets not, it wants to own ITM vs RTT vs UART
-        ]
-    tu_example = []
-    tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/cdc_app.c"]
-    tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/hid_app.c"]
-    tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/msc_app.c"]
-    # This was moved into "board.c" in tusb: dbdc5a239c42e96 (and then later into port.c)
-    # I may need to get that myself? maybe unneeded...
-    #tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/freertos_hook.c"]
+    # # Ok. here comes the bangers...
+    # tu_lib = []
+    # # I can't figure out how to make  this play properly with the variant dir, but it works fine with explicit names.
+    # # somethign to do with the ${TINYUSB} getting expanded or not, and how it detects where to copy shit.
+    # # tu_lib += env.Glob("${TINYUSB}/src/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/common/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/host/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/class/cdc/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/class/hid/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/class/hid/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/class/msc/*.c", source=True)
+    # # tu_lib += env.Glob("${TINYUSB}/src/portable/nxp/khci/*.c", source=True)
+    # tu_lib += [
+    #     '${TINYUSB}/src/tusb.c',
+    #     '${TINYUSB}/src/common/tusb_fifo.c',
+    #     '${TINYUSB}/src/host/hub.c',
+    #     '${TINYUSB}/src/host/usbh.c',
+    #     '${TINYUSB}/src/class/cdc/cdc_device.c',
+    #     '${TINYUSB}/src/class/cdc/cdc_host.c',
+    #     '${TINYUSB}/src/class/cdc/cdc_rndis_host.c',
+    #     '${TINYUSB}/src/class/hid/hid_device.c',
+    #     '${TINYUSB}/src/class/hid/hid_host.c',
+    #     '${TINYUSB}/src/class/msc/msc_device.c',
+    #     '${TINYUSB}/src/class/msc/msc_host.c',
+    #     '${TINYUSB}/src/portable/nxp/khci/dcd_khci.c',
+    #     '${TINYUSB}/src/portable/nxp/khci/hcd_khci.c',
+    #     # but we now need it because it has the freertos hooksss, so we need to work with it's rtt configs...
+    #     '${TINYUSB}/hw/bsp/board.c', # lets not, it wants to own ITM vs RTT vs UART
+    #     ]
+    # tu_example = []
+    # tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/cdc_app.c"]
+    # tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/hid_app.c"]
+    # tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/msc_app.c"]
+    # # This was moved into "board.c" in tusb: dbdc5a239c42e96 (and then later into port.c)
+    # # I may need to get that myself? maybe unneeded...
+    # #tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/freertos_hook.c"]
 
-    #print("ok, ", tu_lib[0], tu_example[0]  )
+    # #print("ok, ", tu_lib[0], tu_example[0]  )
 
-    tu_src = tu_lib + tu_example
-    #print("wat?", tu_src)
-    tu_objs = []
-    tu_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in tu_src]
-    #print("yo, for reals, what's in our obj list?", [f[0].path for f in tu_objs])
-    # ok, why doesn't it work for the globbed ones?
-    #tu_objs += [env.Object(target=f"{bdir}/{f.path}", src=f"#{f.path}") for f in tu_lib]
-    env.Append(
-        CPPPATH=[
-            "${TINYUSB}/src",
-            "${TINYUSB}/hw",
-            # Remember,  python tools/get_deps.py kinetis_k first to make this work!
-            #"${TINYUSB}/hw/mcu/nxp/mcux-sdk/devices/%s" % (b.mcuxinc), # lol, no!
-            "src/mcux-stub",
-            "${TINYUSB}/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily
-            "${TINYUSB}/examples/host/cdc_msc_hid_freertos/src",  # for tusb_config.h
-            "src/tueh/cdc_msc_hid_freertos",
+    # tu_src = tu_lib + tu_example
+    # #print("wat?", tu_src)
+    # tu_objs = []
+    # tu_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in tu_src]
+    # #print("yo, for reals, what's in our obj list?", [f[0].path for f in tu_objs])
+    # # ok, why doesn't it work for the globbed ones?
+    # #tu_objs += [env.Object(target=f"{bdir}/{f.path}", src=f"#{f.path}") for f in tu_lib]
+    # env.Append(
+    #     CPPPATH=[
+    #         "${TINYUSB}/src",
+    #         "${TINYUSB}/hw",
+    #         # Remember,  python tools/get_deps.py kinetis_k first to make this work!
+    #         #"${TINYUSB}/hw/mcu/nxp/mcux-sdk/devices/%s" % (b.mcuxinc), # lol, no!
+    #         "src/mcux-stub",
+    #         "${TINYUSB}/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily
+    #         "${TINYUSB}/examples/host/cdc_msc_hid_freertos/src",  # for tusb_config.h
+    #         "src/tueh/cdc_msc_hid_freertos",
 
-        ]
-    )
+    #     ]
+    # )
 
-    env.Append(CPPDEFINES=[
-        ("CFG_TUSB_MCU", b.tu_mcu),
-        ("CFG_TUSB_DEBUG", 2),  # This is the LOG=n level in tinyusb make vars.
-        f"CPU_{b.part.upper()}",
-    ])
-    app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/tueh/cdc_msc_hid_freertos/{f}") for f in ["main.cpp"]]
-    #app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-rtt.cpp"]]
-    app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp"]]
-    env.Firmware(f"tue_h_cdc_msc_hid_freertos-{b.brd}.elf", tu_objs + app_objs + fr_objs + rtt_objs)
+    # env.Append(CPPDEFINES=[
+    #     ("CFG_TUSB_MCU", b.tu_mcu),
+    #     ("CFG_TUSB_DEBUG", 2),  # This is the LOG=n level in tinyusb make vars.
+    #     f"CPU_{b.part.upper()}",
+    # ])
+    # app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/tueh/cdc_msc_hid_freertos/{f}") for f in ["main.cpp"]]
+    # #app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-rtt.cpp"]]
+    # app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp"]]
+    # env.Firmware(f"tue_h_cdc_msc_hid_freertos-{b.brd}.elf", tu_objs + app_objs + fr_objs + rtt_objs)
