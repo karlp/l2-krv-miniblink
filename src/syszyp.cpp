@@ -15,13 +15,13 @@ char* heap = &_bss_end;
 extern "C" char* _sbrk(int increment) {
    char* r = heap;
    heap += increment;
-   return r; 
+   return r;
 }
 
 
-extern "C" int _read(int file, char* buf, int len) {
-    return 0;
-}
+// extern "C" int _read(int file, char* buf, int len) {
+//     return 0;
+// }
 extern "C" int _close(int file) {
     return -1;
 }

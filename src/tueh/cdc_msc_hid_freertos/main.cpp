@@ -305,10 +305,10 @@ void board_led_write(bool on)
 	led1.set(on);
 }
 
-int board_getchar(void)
-{
-	return 0;
-}
+// int board_getchar(void)
+// {
+// 	return 0;
+// }
 
 int board_uart_read(uint8_t *buf, int len)
 {
@@ -413,12 +413,17 @@ static void usb_host_task(void *param)
 	}
 
 	// init host stack on configured roothub port
-	tuh_init(BOARD_TUH_RHPORT);
+	tusb_rhport_init_t host_init = {
+		.role = TUSB_ROLE_HOST,
+		.speed = TUSB_SPEED_AUTO
+	};
 
-	if (board_init_after_tusb)
-	{
-		board_init_after_tusb();
+	if (!tusb_init(BOARD_TUH_RHPORT, &host_init)) {
+		printf("Failed to init USB Host Stack\r\n");
+		vTaskSuspend(NULL);
 	}
+
+	board_init_after_tusb();
 
 #if CFG_TUH_ENABLED && CFG_TUH_MAX3421
 	// FeatherWing MAX3421E use MAX3421E's GPIO0 for VBUS enable
@@ -452,12 +457,14 @@ void tuh_mount_cb(uint8_t dev_addr)
 {
 	// application set-up
 	printf("A device with address %d is mounted\r\n", dev_addr);
+	xTimerChangePeriod(blinky_tm, pdMS_TO_TICKS(BLINK_MOUNTED), 0);
 }
 
 void tuh_umount_cb(uint8_t dev_addr)
 {
 	// application tear-down
 	printf("A device with address %d is unmounted \r\n", dev_addr);
+	xTimerChangePeriod(blinky_tm, pdMS_TO_TICKS(BLINK_NOT_MOUNTED), 0);
 }
 
 //--------------------------------------------------------------------+

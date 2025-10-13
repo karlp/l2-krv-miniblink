@@ -67,6 +67,7 @@ for b in boards_kx:
     rtt_src = ["#extern/tinyusb/lib/SEGGER_RTT/RTT/SEGGER_RTT.c"]
     rtt_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in rtt_src]
     env.Append(CPPPATH="#extern/tinyusb/lib/SEGGER_RTT/RTT")
+    env.Append(CPPDEFINES=[("LOGGER_RTT", 1)])
 
     # woudl need to remove cpppath again, cant' clone the env as that makes dups for the laks files.. just comment it out
     #env.Append(CPPPATH="#src")
@@ -93,26 +94,29 @@ for b in boards_kx:
         '${TINYUSB}/src/tusb.c',
         '${TINYUSB}/src/common/tusb_fifo.c',
         '${TINYUSB}/src/host/hub.c',
-        '${TINYUSB}/src/host/usbh.c', 
+        '${TINYUSB}/src/host/usbh.c',
         '${TINYUSB}/src/class/cdc/cdc_device.c',
         '${TINYUSB}/src/class/cdc/cdc_host.c',
         '${TINYUSB}/src/class/cdc/cdc_rndis_host.c',
-        '${TINYUSB}/src/class/hid/hid_device.c', 
-        '${TINYUSB}/src/class/hid/hid_host.c', 
-        '${TINYUSB}/src/class/msc/msc_device.c', 
-        '${TINYUSB}/src/class/msc/msc_host.c', 
+        '${TINYUSB}/src/class/hid/hid_device.c',
+        '${TINYUSB}/src/class/hid/hid_host.c',
+        '${TINYUSB}/src/class/msc/msc_device.c',
+        '${TINYUSB}/src/class/msc/msc_host.c',
         '${TINYUSB}/src/portable/nxp/khci/dcd_khci.c',
         '${TINYUSB}/src/portable/nxp/khci/hcd_khci.c',
-        #'${TINYUSB}/hw/bsp/board.c', # lets not, it wants to own ITM vs RTT vs UART
+        # but we now need it because it has the freertos hooksss, so we need to work with it's rtt configs...
+        '${TINYUSB}/hw/bsp/board.c', # lets not, it wants to own ITM vs RTT vs UART
         ]
     tu_example = []
     tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/cdc_app.c"]
     tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/hid_app.c"]
     tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/msc_app.c"]
-    tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/freertos_hook.c"]
+    # This was moved into "board.c" in tusb: dbdc5a239c42e96 (and then later into port.c)
+    # I may need to get that myself? maybe unneeded...
+    #tu_example += ["${TINYUSB}/examples/host/cdc_msc_hid_freertos/src/freertos_hook.c"]
 
     #print("ok, ", tu_lib[0], tu_example[0]  )
-    
+
     tu_src = tu_lib + tu_example
     #print("wat?", tu_src)
     tu_objs = []
@@ -127,7 +131,7 @@ for b in boards_kx:
             # Remember,  python tools/get_deps.py kinetis_k first to make this work!
             #"${TINYUSB}/hw/mcu/nxp/mcux-sdk/devices/%s" % (b.mcuxinc), # lol, no!
             "src/mcux-stub",
-            "${TINYUSB}/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily     
+            "${TINYUSB}/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily
             "${TINYUSB}/examples/host/cdc_msc_hid_freertos/src",  # for tusb_config.h
             "src/tueh/cdc_msc_hid_freertos",
 
@@ -140,6 +144,6 @@ for b in boards_kx:
         f"CPU_{b.part.upper()}",
     ])
     app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/tueh/cdc_msc_hid_freertos/{f}") for f in ["main.cpp"]]
-    app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-rtt.cpp"]]
+    #app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-rtt.cpp"]]
+    app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp"]]
     env.Firmware(f"tue_h_cdc_msc_hid_freertos-{b.brd}.elf", tu_objs + app_objs + fr_objs + rtt_objs)
-    

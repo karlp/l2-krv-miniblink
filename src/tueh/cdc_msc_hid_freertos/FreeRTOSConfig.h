@@ -45,30 +45,10 @@
 #ifndef __IASMARM__
 
 // Include MCU header
-#include "bsp/board_mcu.h"
-
-#if CFG_TUSB_MCU == OPT_MCU_ESP32S2 || CFG_TUSB_MCU == OPT_MCU_ESP32S3
-#error "ESP32-Sx should use IDF's FreeRTOSConfig.h"
+#include "fsl_device_registers.h"
 #endif
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wredundant-decls"
-#endif
-
-// TODO fix later
-// FIXME cause redundant-decls warnings
-#if CFG_TUSB_MCU == OPT_MCU_MM32F327X
-extern u32 SystemCoreClock;
-#else
 extern uint32_t SystemCoreClock;
-#endif
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
-#endif
 
 /* Cortex M23/M33 port configuration. */
 #define configENABLE_MPU 0
