@@ -10,3 +10,6 @@
 [submodule "extern/tinyusb"]
 	path = extern/tinyusb
 	url = ssh://git@bitbucket-tp.mymarel.com:7999/~karl.palsson/tinyusb.git
+[submodule "extern/mcux-usb"]
+	path = extern/mcux-usb
+	url = https://github.com/nxp-mcuxpresso/mcux-sdk-middleware-usb
