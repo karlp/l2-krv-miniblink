@@ -57,6 +57,16 @@ __STATIC_FORCEINLINE void __ISB(void)
 
 #define __NOP() __ASM volatile("nop")
 
+
+__STATIC_FORCEINLINE uint32_t __get_IPSR(void)
+{
+     uint32_t result;
+
+     __ASM volatile ("MRS %0, ipsr" : "=r" (result) );
+     return(result);
+}
+
+
 #if (defined(CPU_MK70FX512VMJ12) || defined(CPU_MK70FN1M0VMJ12) || \
      defined(CPU_MK70FX512VMJ15) || defined(CPU_MK70FN1M0VMJ15))
 #define K70F12_SERIES
