@@ -84,6 +84,21 @@ usb_host_handle g_HostHandle;
  * Code
  ******************************************************************************/
 
+// here is where some shit gets done by mcux magic combining?
+// the _examples_ repo doesn't have this, it must get magically combined in boards somewhere?
+void USB_HostTaskFn(void *param)
+{
+    USB_HostKhciTaskFunction(param);
+}
+
+void USB0_IRQHandler(void)
+{
+    USB_HostKhciIsrFunction(g_HostHandle);
+    /* Add for ARM errata 838869, affects Cortex-M4, Cortex-M4F Store immediate overlapping
+    exception return operation might vector to incorrect interrupt */
+    __DSB();
+}
+
 /*!
  * @brief USB isr function.
  */
