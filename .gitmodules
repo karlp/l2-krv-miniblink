@@ -13,3 +13,6 @@
 [submodule "extern/mcux-usb"]
 	path = extern/mcux-usb
 	url = https://github.com/nxp-mcuxpresso/mcux-sdk-middleware-usb
+[submodule "extern/mcux-components"]
+	path = extern/mcux-components
+	url = git@github.com:nxp-mcuxpresso/mcux-component.git
