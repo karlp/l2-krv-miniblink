@@ -70,31 +70,31 @@ static void USB_HostMouseProcessBuffer(uint8_t *buffer)
     /* 1. Left key action */
     if (buffer[0] & 0x01)
     {
-        usb_echo("Left Click ");
+        printf("Left Click ");
     }
     else
     {
-        usb_echo("           ");
+        printf("           ");
     }
 
     /* 2. Middle key action */
     if (buffer[0] & 0x04)
     {
-        usb_echo("Middle Click ");
+        printf("Middle Click ");
     }
     else
     {
-        usb_echo("            ");
+        printf("            ");
     }
 
     /* 3. Right key action */
     if (buffer[0] & 0x02)
     {
-        usb_echo("Right Click ");
+        printf("Right Click ");
     }
     else
     {
-        usb_echo("           ");
+        printf("           ");
     }
 
     /* 4. Left/Right movement */
@@ -102,16 +102,16 @@ static void USB_HostMouseProcessBuffer(uint8_t *buffer)
     {
         if (buffer[1] > 127)
         {
-            usb_echo("Left  ");
+            printf("Left  ");
         }
         else
         {
-            usb_echo("Right ");
+            printf("Right ");
         }
     }
     else
     {
-        usb_echo("      ");
+        printf("      ");
     }
 
     /* 5. UP/Down movement */
@@ -119,16 +119,16 @@ static void USB_HostMouseProcessBuffer(uint8_t *buffer)
     {
         if (buffer[2] > 127)
         {
-            usb_echo("UP   ");
+            printf("UP   ");
         }
         else
         {
-            usb_echo("Down ");
+            printf("Down ");
         }
     }
     else
     {
-        usb_echo("     ");
+        printf("     ");
     }
 
     /* 6. Whell Down/Wheel UP action */
@@ -136,19 +136,19 @@ static void USB_HostMouseProcessBuffer(uint8_t *buffer)
     {
         if (buffer[3] > 127)
         {
-            usb_echo("Wheel Down");
+            printf("Wheel Down");
         }
         else
         {
-            usb_echo("Wheel UP  ");
+            printf("Wheel UP  ");
         }
     }
     else
     {
-        usb_echo("          ");
+        printf("          ");
     }
 
-    usb_echo("\r\n");
+    printf("\r\n");
 }
 
 static void USB_HostHidControlCallback(void *param, uint8_t *data, uint32_t dataLength, usb_status_t status)
@@ -219,11 +219,11 @@ void USB_HostHidMouseTask(void *param)
                 /* hid class initialization */
                 if (USB_HostHidInit(mouseInstance->deviceHandle, &mouseInstance->classHandle) != kStatus_USB_Success)
                 {
-                    usb_echo("host hid class initialize fail\r\n");
+                    printf("host hid class initialize fail\r\n");
                 }
                 else
                 {
-                    usb_echo("mouse attached\r\n");
+                    printf("mouse attached\r\n");
                 }
                 break;
 
@@ -233,7 +233,7 @@ void USB_HostHidMouseTask(void *param)
                 USB_HostHidDeinit(mouseInstance->deviceHandle,
                                   mouseInstance->classHandle); /* hid class de-initialization */
                 mouseInstance->classHandle = NULL;
-                usb_echo("mouse detached\r\n");
+                printf("mouse detached\r\n");
                 break;
 
             default:
@@ -253,7 +253,7 @@ void USB_HostHidMouseTask(void *param)
             if (USB_HostHidSetInterface(mouseInstance->classHandle, mouseInstance->interfaceHandle, 0,
                                         USB_HostHidControlCallback, mouseInstance) != kStatus_USB_Success)
             {
-                usb_echo("set interface error\r\n");
+                printf("set interface error\r\n");
             }
             break;
 
@@ -267,7 +267,7 @@ void USB_HostHidMouseTask(void *param)
             if (USB_HostHidSetIdle(mouseInstance->classHandle, 0, 0, USB_HostHidControlCallback, mouseInstance) !=
                 kStatus_USB_Success)
             {
-                usb_echo("Error in USB_HostHidSetIdle\r\n");
+                printf("Error in USB_HostHidSetIdle\r\n");
             }
             break;
 
@@ -308,7 +308,7 @@ void USB_HostHidMouseTask(void *param)
             }
             if (mouseReportLength > HID_BUFFER_SIZE)
             {
-                usb_echo("hid buffer is too small\r\n");
+                printf("hid buffer is too small\r\n");
                 mouseInstance->runState = kUSB_HostHidRunIdle;
                 return;
             }
@@ -330,7 +330,7 @@ void USB_HostHidMouseTask(void *param)
             if (USB_HostHidSetProtocol(mouseInstance->classHandle, USB_HOST_HID_REQUEST_PROTOCOL_REPORT,
                                        USB_HostHidControlCallback, mouseInstance) != kStatus_USB_Success)
             {
-                usb_echo("Error in USB_HostHidSetProtocol\r\n");
+                printf("Error in USB_HostHidSetProtocol\r\n");
             }
             break;
 
@@ -340,7 +340,7 @@ void USB_HostHidMouseTask(void *param)
             if (USB_HostHidRecv(mouseInstance->classHandle, mouseInstance->mouseBuffer, mouseInstance->maxPacketSize,
                                 USB_HostHidInCallback, mouseInstance) != kStatus_USB_Success)
             {
-                usb_echo("Error in USB_HostHidRecv\r\n");
+                printf("Error in USB_HostHidRecv\r\n");
             }
             break;
 
@@ -352,7 +352,7 @@ void USB_HostHidMouseTask(void *param)
             if (USB_HostHidRecv(mouseInstance->classHandle, mouseInstance->mouseBuffer, mouseInstance->maxPacketSize,
                                 USB_HostHidInCallback, mouseInstance) != kStatus_USB_Success)
             {
-                usb_echo("Error in USB_HostHidRecv\r\n");
+                printf("Error in USB_HostHidRecv\r\n");
             }
             break;
 
@@ -362,7 +362,7 @@ void USB_HostHidMouseTask(void *param)
             if (USB_HostHidRecv(mouseInstance->classHandle, mouseInstance->mouseBuffer, mouseInstance->maxPacketSize,
                                 USB_HostHidInCallback, mouseInstance) != kStatus_USB_Success)
             {
-                usb_echo("Error in USB_HostHidRecv\r\n");
+                printf("Error in USB_HostHidRecv\r\n");
             }
             break;
 
@@ -439,15 +439,15 @@ usb_status_t USB_HostHidMouseEvent(usb_device_handle deviceHandle,
                         g_HostHidMouse.deviceState = kStatus_DEV_Attached;
 
                         USB_HostHelperGetPeripheralInformation(deviceHandle, kUSB_HostGetDevicePID, &infoValue);
-                        usb_echo("hid mouse attached:pid=0x%x", infoValue);
+                        printf("hid mouse attached:pid=0x%lx", infoValue);
                         USB_HostHelperGetPeripheralInformation(deviceHandle, kUSB_HostGetDeviceVID, &infoValue);
-                        usb_echo("vid=0x%x ", infoValue);
+                        printf("vid=0x%lx ", infoValue);
                         USB_HostHelperGetPeripheralInformation(deviceHandle, kUSB_HostGetDeviceAddress, &infoValue);
-                        usb_echo("address=%d\r\n", infoValue);
+                        printf("address=%ld\r\n", infoValue);
                     }
                     else
                     {
-                        usb_echo("not idle mouse instance\r\n");
+                        printf("not idle mouse instance\r\n");
                         status = kStatus_USB_Error;
                     }
                 }
