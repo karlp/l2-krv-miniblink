@@ -10,6 +10,7 @@ typedef enum IRQn
 #define __FPU_PRESENT 1    /**< Defines if an FPU is present or not */
 #define __NVIC_PRIO_BITS 4 /**< Number of priority bits implemented in the NVIC */
 // #include "core_cm4.h"      /* Core Peripheral Access Layer */
+//#include "cmsis_gcc.h"
 
 /* ----------------------------------------------------------------------------
    -- USB Peripheral Access Layer

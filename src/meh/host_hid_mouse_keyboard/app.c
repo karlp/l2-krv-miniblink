@@ -14,7 +14,7 @@
 #include "host_keyboard.h"
 #include "host_mouse.h"
 #include "fsl_common.h"
-#include "board.h"
+//#include "board.h"
 #if (defined(FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT > 0U))
 #include "fsl_sysmpu.h"
 #endif /* FSL_FEATURE_SOC_SYSMPU_COUNT */
@@ -99,6 +99,22 @@ void USB0_IRQHandler(void)
     __DSB();
 }
 
+// void USB_HostIsrEnable(void)
+// {
+//     uint8_t irqNumber;
+
+//     uint8_t usbHOSTKhciIrq[] = USB_IRQS;
+//     irqNumber                = usbHOSTKhciIrq[CONTROLLER_ID - kUSB_ControllerKhci0];
+
+// /* Install isr, set priority, and enable IRQ. */
+// #if defined(__GIC_PRIO_BITS)
+//     GIC_SetPriority((IRQn_Type)irqNumber, USB_HOST_INTERRUPT_PRIORITY);
+// #else
+//     NVIC_SetPriority((IRQn_Type)irqNumber, USB_HOST_INTERRUPT_PRIORITY);
+// #endif
+//     EnableIRQ((IRQn_Type)irqNumber);
+// }
+
 /*!
  * @brief USB isr function.
  */
@@ -110,6 +126,7 @@ static usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
     usb_status_t status1;
     usb_status_t status2;
     usb_status_t status = kStatus_USB_Success;
+    printf("Hevt: %lx\r\n", eventCode);
 
     switch (eventCode & 0x0000FFFFU)
     {
@@ -154,11 +171,11 @@ static usb_status_t USB_HostEvent(usb_device_handle deviceHandle,
     return status;
 }
 
-static void USB_HostApplicationInit(void)
+void USB_HostApplicationInit(void)
 {
     usb_status_t status = kStatus_USB_Success;
 
-    USB_HostClockInit();
+    //USB_HostClockInit();  // we've done this...
 
 #if ((defined FSL_FEATURE_SOC_SYSMPU_COUNT) && (FSL_FEATURE_SOC_SYSMPU_COUNT))
     SYSMPU_Enable(SYSMPU, 0);
@@ -170,7 +187,7 @@ static void USB_HostApplicationInit(void)
         printf("host init error\r\n");
         return;
     }
-    USB_HostIsrEnable();
+    //USB_HostIsrEnable();  // I'll handle that..
 
     printf("host init done\r\n");
 }
@@ -199,9 +216,10 @@ static void USB_HostApplicationKeyboardTask(void *param)
     }
 }
 
-int main(void)
+int fsl_app_main(void)
 {
-    BOARD_InitHardware();
+    // we cover this in laks...
+    // BOARD_InitHardware();
 
     USB_HostApplicationInit();
 
@@ -220,10 +238,11 @@ int main(void)
         printf("create keyboard task error\r\n");
     }
 
-    vTaskStartScheduler();
+    // vTaskStartScheduler();
 
-    while (1)
-    {
-        ;
-    }
+    // while (1)
+    // {
+    //     ;
+    // }
+    return 0;
 }

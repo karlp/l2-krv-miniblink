@@ -18,7 +18,7 @@ void vAssertCalled(const char *const pcFileName, unsigned long ulLine);
 #define configTICK_RATE_HZ 1000
 #define configMAX_PRIORITIES 5
 #define configMINIMAL_STACK_SIZE 128 /* this is in _WORDS_ */
-#define configTOTAL_HEAP_SIZE (5 * 1024)
+#define configTOTAL_HEAP_SIZE (32 * 1024)
 #define configMAX_TASK_NAME_LEN 16
 #define configUSE_16_BIT_TICKS 0
 #define configIDLE_SHOULD_YIELD 1
@@ -41,7 +41,7 @@ void vAssertCalled(const char *const pcFileName, unsigned long ulLine);
 
 /* Run time and task stats gathering related definitions. */
 #define configGENERATE_RUN_TIME_STATS 0
-#define configUSE_TRACE_FACILITY 0
+#define configUSE_TRACE_FACILITY 1
 #define configUSE_STATS_FORMATTING_FUNCTIONS 0
 
 /* Co-routine related definitions. */
@@ -82,7 +82,8 @@ void vAssertCalled(const char *const pcFileName, unsigned long ulLine);
 #define INCLUDE_xTimerGetTimerDaemonTaskHandle 0
 #define INCLUDE_pcTaskGetTaskName 0
 #define INCLUDE_eTaskGetState 0
-#define INCLUDE_xEventGroupSetBitFromISR 1
+#define INCLUDE_xEventGroupSetBitFromISR 0
+#define INCLUDE_xEventGroupClearBitsFromISR 1
 #define INCLUDE_xTimerPendFunctionCall 0
 
 /* A header file that defines trace macro can be included here. */

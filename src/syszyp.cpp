@@ -34,12 +34,12 @@ extern "C" int _isatty(int file) {
 extern "C" int _lseek(int file, int offset, int whence) {
     return 0;
 }
-//extern "C" int _getpid() {
-//    return 1;
-//}
-//extern "C" int _kill(int pid, int sig) {
-//    return -1;
-//}
+extern "C" int _getpid() {
+   return 1;
+}
+extern "C" int _kill(int pid, int sig) {
+   return -1;
+}
 extern "C" void _exit(int status) {
    while(1) {}
 }
