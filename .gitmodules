@@ -12,7 +12,7 @@
 	url = ssh://git@bitbucket-tp.mymarel.com:7999/~karl.palsson/tinyusb.git
 [submodule "extern/mcux-usb"]
 	path = extern/mcux-usb
-	url = https://github.com/nxp-mcuxpresso/mcux-sdk-middleware-usb
+	url = git@github.com:karlp/mcuxsdk-middleware-usb.git
 [submodule "extern/mcux-components"]
 	path = extern/mcux-components
 	url = git@github.com:nxp-mcuxpresso/mcux-component.git
