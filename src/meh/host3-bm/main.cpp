@@ -3,11 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// #include <FreeRTOS.h>
-// #include <task.h>
-// #include <timers.h>
-
-
 #include <cortex_m/debug.h>
 #include <interrupt/interrupt.h>
 #include <nxp_kx/mcg.h>
@@ -24,26 +19,6 @@
 //#include "core_cm4.h"
 #define __NVIC_PRIO_BITS 4 /**< Number of priority bits implemented in the NVIC */
 
-
-
-//--------------------------------------------------------------------+
-// MACRO CONSTANT TYPEDEF PROTOTYPES
-//--------------------------------------------------------------------+
-/* Blink pattern
- * - 250 ms  : device not mounted
- * - 1000 ms : device mounted
- * - 2500 ms : device is suspended
- */
-enum
-{
-	BLINK_NOT_MOUNTED = 250,
-	BLINK_MOUNTED = 1000,
-	BLINK_SUSPENDED = 2500,
-};
-
-// TimerHandle_t blinky_tm;
-
-// static void led_blinky_cb(TimerHandle_t xTimer);
 
 extern "C"
 {
@@ -290,44 +265,18 @@ int main()
 	board_init();
 
 	setvbuf(stdout, NULL, _IONBF, 0);
-	printf("laks+MCUX USB Middleware Host HID with FreeRTOS Example2\n");
+	printf("laks+MCUX USB Middleware Host HID with bare metal\n");
 
 	// I have other code that uses syscall, but should be ok as long as it's higher prior
 	// NVIC_SetPriority(USB0_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY);
 	NVIC.set_priority(interrupt::irq::USB_OTG, USB_HOST_INTERRUPT_PRIORITY << configPRIO_BITS);
 	NVIC.enable(interrupt::irq::USB_OTG);
 	fsl_app_main();
-	// blinky_tm = xTimerCreate(NULL, pdMS_TO_TICKS(BLINK_NOT_MOUNTED), true, NULL, led_blinky_cb);
-	// xTimerStart(blinky_tm, 0);
-	// printf("configpriobits is %d, usb hirq prio %d, lib max syscall: %d\n", configPRIO_BITS, USB_HOST_INTERRUPT_PRIORITY, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY);
-	// vTaskStartScheduler();
-	// while(1) {
-	// 	;
-	// }
 }
 
 
-//--------------------------------------------------------------------+
-// BLINKING TASK
-//--------------------------------------------------------------------+
-// static void led_blinky_cb(TimerHandle_t xTimer)
-// {
-// 	(void)xTimer;
-// 	static bool led_state = false;
-// 	board_led_write(led_state);
-// 	led_state = 1 - led_state; // toggle
-// }
-
-// TODO -figure out how to give this to freertosconfig?
-// #define vPortSVCHandler SVC_Handler
-// #define xPortPendSVHandler PendSV_Handler
-// #define xPortSysTickHandler SysTick_Handler
 extern "C"
 {
-	// void vPortSVCHandler(void);
-	// void xPortPendSVHandler(void);
-	// void xPortSysTickHandler(void);
-	// void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName);
 	void USB0_IRQHandler(void);
 	// extern void* g_HostHandle;
 
@@ -336,24 +285,6 @@ extern "C"
 // This should work with laks interrupts... but going to have the include paths..
 #define __COMPILER_BARRIER() __asm__ volatile("" ::: "memory")
 
-	// void NVIC_EnableIRQ(IRQn_Type IRQn)
-	// {
-	// 	if ((int32_t)(IRQn) >= 0)
-	// 	{
-	// 		__COMPILER_BARRIER();
-	// 		NVIC->ISER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
-	// 		__COMPILER_BARRIER();
-	// 	}
-	// }
-	// void NVIC_DisableIRQ(IRQn_Type IRQn)
-	// {
-	// 	if ((int32_t)(IRQn) >= 0)
-	// 	{
-	// 		NVIC->ICER[(((uint32_t)IRQn) >> 5UL)] = (uint32_t)(1UL << (((uint32_t)IRQn) & 0x1FUL));
-	// 		__DSB();
-	// 		__ISB();
-	// 	}
-	// }
 	void EnableGlobalIRQ(uint32_t primask)
 	{
 		//__set_PRIMASK(primask);
@@ -371,59 +302,7 @@ extern "C"
 		return result;
 	}
 
-
-
-
-	// void vAssertCalled(const char *const pcFileName, unsigned long ulLine)
-	// {
-	// 	volatile unsigned long ulSetToNonZeroInDebuggerToContinue = 0;
-
-	// 	/* Parameters are not used. */
-	// 	(void)ulLine;
-	// 	(void)pcFileName;
-
-	// 	taskENTER_CRITICAL();
-	// 	{
-	// 		while (ulSetToNonZeroInDebuggerToContinue == 0)
-	// 		{
-	// 			/* Use the debugger to set ulSetToNonZeroInDebuggerToContinue to a
-	// 			non zero value to step out of this function to the point that raised
-	// 			this assert(). */
-	// 			__asm volatile("NOP");
-	// 			__asm volatile("NOP");
-	// 		}
-	// 	}
-	// 	taskEXIT_CRITICAL();
-	// }
-
-	// void vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName) {
-	// 	(void) pxTask;
-	// 	(void) pcTaskName;
-	// 	printf("lol, you crashed in %s", pcTaskName);
-	// 	while(1) {
-	// 		;
-	// 	}
-	// }
-
-	int32_t lol_cyccnt(void) {
-		return DWT->CYCCNT;
-	}
 }
-// template <>
-// void interrupt::handler<interrupt::exception::SVCall>()
-// {
-// 	vPortSVCHandler();
-// }
-// template <>
-// void interrupt::handler<interrupt::exception::PendSV>()
-// {
-// 	xPortPendSVHandler();
-// }
-// template <>
-// void interrupt::handler<interrupt::exception::SysTick>()
-// {
-// 	xPortSysTickHandler();
-// }
 
 template <>
 void interrupt::handler<interrupt::irq::USB_OTG>()
