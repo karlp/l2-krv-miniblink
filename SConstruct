@@ -49,22 +49,23 @@ for b in boards_kx:
         LINKFLAGS = Split('--specs=nano.specs'),
     )
 
-    # FreeRTOS stuff
-    env.SetDefault(
-            FREERTOS = "#extern/freertos",
-            FREERTOS_PORT = "#extern/freertos/portable/GCC/%s" % freertos_arch.get(env["PLATFORM_SPEC"]["meta"]["cpu"], "UNKNOWN_FREERTOS_ARCH"),
-            )
-    env.Append(
-        CPPPATH = [
-                "${FREERTOS}/include",
-                "${FREERTOS_PORT}",
-                #"#src", # This is "not freertos"!
-                ],
-    )
-    fr_src = [os.path.join("${FREERTOS}/", x) for x in Split("list.c queue.c tasks.c timers.c event_groups.c")]
-    fr_src += ["${FREERTOS_PORT}/port.c"]
-    fr_src += ["${FREERTOS}/portable/MemMang/heap_4.c"]  # tinyusb doesn't use this!
-    fr_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in fr_src]
+    # # FreeRTOS stuff
+    # env.SetDefault(
+    #         FREERTOS = "#extern/freertos",
+    #         FREERTOS_PORT = "#extern/freertos/portable/GCC/%s" % freertos_arch.get(env["PLATFORM_SPEC"]["meta"]["cpu"], "UNKNOWN_FREERTOS_ARCH"),
+    #         )
+    # env.Append(
+    #     CPPPATH = [
+    #             "${FREERTOS}/include",
+    #             "${FREERTOS_PORT}",
+    #             #"#src", # This is "not freertos"!
+    #             ],
+    # )
+    # fr_src = [os.path.join("${FREERTOS}/", x) for x in Split("list.c queue.c tasks.c timers.c event_groups.c")]
+    # fr_src += ["${FREERTOS_PORT}/port.c"]
+    # fr_src += ["${FREERTOS}/portable/MemMang/heap_4.c"]  # tinyusb doesn't use this!
+    # fr_objs = [env.Object(target=f"{bdir}/{f}", src=f"#{f}") for f in fr_src]
+    fr_objs = []
 
     # Right now, we're just sneakily grabbing it ahead of time out of the tusb repo, we know they have it.
     rtt_src = ["#extern/tinyusb/lib/SEGGER_RTT/RTT/SEGGER_RTT.c"]
@@ -79,9 +80,9 @@ for b in boards_kx:
 
 
     meh_example = []
-    meh_example += ["#src/meh/host_hid_mouse_keyboard/app.c"]
-    meh_example += ["#src/meh/host_hid_mouse_keyboard/host_keyboard.c"]
-    meh_example += ["#src/meh/host_hid_mouse_keyboard/host_mouse.c"]
+    meh_example += ["#src/meh/host3-bm/app.c"]
+    meh_example += ["#src/meh/host3-bm/host_keyboard.c"]
+    meh_example += ["#src/meh/host3-bm/host_mouse.c"]
 
     env.SetDefault(MCUXU="#extern/mcux-usb")
     env.SetDefault(MCUXC="#extern/mcux-components")
@@ -95,7 +96,8 @@ for b in boards_kx:
         '${MCUXU}/host/class/usb_host_hub.c',
         '${MCUXU}/host/class/usb_host_hub_app.c',
         '${MCUXU}/host/class/usb_host_hid.c',
-        '${MCUXC}/osa/fsl_os_abstraction_free_rtos.c',
+        #'${MCUXC}/osa/fsl_os_abstraction_free_rtos.c',
+        '${MCUXC}/osa/fsl_os_abstraction_bm.c',
         '${MCUXC}/lists/fsl_component_generic_list.c',
     ]
     meh_src = meh_lib + meh_example
@@ -109,7 +111,7 @@ for b in boards_kx:
             "${MCUXC}/lists",
             "${MCUXC}/osa",
             "${MCUXC}/osa/config",
-            "src/meh/host_hid_mouse_keyboard",
+            "src/meh/host3-bm",
             # FIXME - make this not depend on tusb!
             "#extern/tinyusb/lib/CMSIS_5/CMSIS/Core/Include", # both tusb and mcux use cmsis heavily
         ]
@@ -117,18 +119,18 @@ for b in boards_kx:
     env.Append(CPPDEFINES=[
         # ("CFG_TUSB_MCU", b.tu_mcu),
         # ("CFG_TUSB_DEBUG", 2),  # This is the LOG=n level in tinyusb make vars.
-        "USB_STACK_FREERTOS",
-        "SDK_OS_FREE_RTOS",
-        ("USB_STACK_FREERTOS_HEAP_SIZE", 32768),
+        "USB_STACK_BM",
+        # "SDK_OS_FREE_RTOS",
+        # ("USB_STACK_FREERTOS_HEAP_SIZE", 32768),
         ("FSL_OSA_BM_TASK_ENABLE", 0),
         ("FSL_OSA_BM_TIMER_CONFIG", 0),
         f"CPU_{b.part.upper()}",
     ])
 
-    app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/meh/host_hid_mouse_keyboard/{f}") for f in ["main.cpp", "freertos-static-helpers.c"]]
+    app_objs = [env.Object(target=f"{bdir}/{f}.o", source=f"#src/meh/host3-bm/{f}") for f in ["main.cpp"]]
     app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp", "stdio-rtt.cpp"]]
     # app_objs +=[env.Object(target=f"{bdir}/{f}.o", source=f"#src/{f}") for f in ["syszyp.cpp"]]
-    env.Firmware(f"meh_host_hid_mouse_keyboard-{b.brd}.elf", meh_objs + app_objs + fr_objs + rtt_objs)
+    env.Firmware(f"meh_host3-bm-{b.brd}.elf", meh_objs + app_objs + fr_objs + rtt_objs)
 
 
 
