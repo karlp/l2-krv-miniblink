@@ -61,7 +61,7 @@ extern uint32_t SystemCoreClock;
 // KARL - we'll provide this from laks
 #define configCPU_CLOCK_HZ SystemCoreClock
 #define configTICK_RATE_HZ (1000)
-#define configMAX_PRIORITIES (10) // we had this too low by default!
+#define configMAX_PRIORITIES (18) // we had this too low by default!
 #define configMINIMAL_STACK_SIZE (128)
 #define configTOTAL_HEAP_SIZE (configSUPPORT_DYNAMIC_ALLOCATION * 16 * 1024)
 #define configMAX_TASK_NAME_LEN 16
@@ -102,7 +102,7 @@ extern uint32_t SystemCoreClock;
 #define configUSE_TIMERS 1
 #define configTIMER_TASK_PRIORITY (configMAX_PRIORITIES - 1) // we had -2..
 #define configTIMER_QUEUE_LENGTH 32
-#define configTIMER_TASK_STACK_DEPTH configMINIMAL_STACK_SIZE
+#define configTIMER_TASK_STACK_DEPTH (configMINIMAL_STACK_SIZE * 2)
 
 void vAssertCalled(const char *const pcFileName, unsigned long ulLine);
 

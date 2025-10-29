@@ -124,7 +124,7 @@ void laks_clock_config_for_usb_k64()
 	int range = 2;								  // "very high"
 	MCG->C2 = (1 << 7) | (range << 4) | (0 << 2); // loss of clock, range, external reference, don't care about others.
 	// no, it doesn't fix anything, as it shouldn't.
-	//MCG->C2 |= (1<<6); // do the damn fcftrim, it's the only bit that is different vs the factory exampples
+	MCG->C2 |= (1<<6); // do the damn fcftrim, it's the only bit that is different vs the factory exampples
 	OSC0->CR |= (1 << 7);						  // extrefenable  // ref code set this separately, after configuring C2...
 	// only meant to wait here if we're usign oscillator, not external!
 	// while (!(MCG->S & (1 << 1)))				  // ok, stuck here already. boooo
@@ -139,10 +139,33 @@ void laks_clock_config_for_usb_k64()
 	// I'm not sure we even _care_ about this, it just sets the MCGIRCLK
 	// that's the 30/40khz or 4Mhz clock.  Can be used by LPTMR, and also as a low speed VLPR system clock..
 	// skip it for now!
+	int ircs = 0;
+	if (MCG->C1 & (1<<1)) {
+		// meh, this path ~never happens on our codebase)
+		// IRCLKEN, must go to slow turn off before changing..
+		MCG->C2 &= ~(1<<0);
+		while ((MCG->S & (1<<0)) != (ircs<<0)) {
+			; // while not on slow
+		}
+		MCG.set_fcr_div(0);
+	}
+	MCG->C2 &= ~(1<<0);  // select slow
+	MCG->C2 |= (ircs << 0);
+	MCG->C1 = (MCG->C1 & ~(3<<0)) | (1<<1); // IRREFCLK EN, not in stop mode.
+	if (MCG.clock_source() == 1) {
+		while ((MCG->S & (1<<0)) != (ircs<<0)) {
+			;
+		}
+	}
+
+
 
 	// CLOCK_CONFIG_SetFllExtRefDiv(mcgConfig_BOARD_BootClockRUN.frdiv);
 	// again, only useful for setting fll divider, which we're not using...
 	// skip it for now!
+	MCG.set_fr_div(0);
+
+
 
 	/* Set MCG to PEE mode. */
 	// CLOCK_BootToPeeMode(mcgConfig_BOARD_BootClockRUN.oscsel,
@@ -170,6 +193,7 @@ void laks_clock_config_for_usb_k64()
 	int vdiv0 = 24; // => 240MHz output  there's a /2 afterwards on k70.... range is 16--47times.
 	int vdiv_correction = 16;
 #else
+// k64 has 50M ext from etherphy, so output is 50 / 20 * 48 == 120
 	int prdiv0 = 20; // this is for k64, which needs 2-4Mhz pll ref.
 	int vdiv0 = 48;
 	int vdiv_correction = 24;
@@ -506,10 +530,10 @@ int main()
 
 	// Create soft timer for blinky, task for tinyusb stack
 #if configSUPPORT_STATIC_ALLOCATION
-	blinky_tm = xTimerCreateStatic(NULL, pdMS_TO_TICKS(BLINK_MOUNTED), true, NULL, led_blinky_cb, &blinky_tmdef);
+	// blinky_tm = xTimerCreateStatic(NULL, pdMS_TO_TICKS(BLINK_MOUNTED), true, NULL, led_blinky_cb, &blinky_tmdef);
 	// xTaskCreateStatic(usb_host_task, "usbh", USBH_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, usb_host_stack, &usb_host_taskdef);
 	// This is for the v2400 board....
-	xTaskCreateStatic(task_late_start, "late", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, task_late_stack, &task_late_handle);
+	// xTaskCreateStatic(task_late_start, "late", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, task_late_stack, &task_late_handle);
 	fsl_app_main();
 #else
 #error "This path isn't actually used"
@@ -518,7 +542,7 @@ int main()
 	xTaskCreate(task_late_start, "xlate", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 #endif
 
-	xTimerStart(blinky_tm, 0);
+	// xTimerStart(blinky_tm, 0);
 
 	// not entirely convinced this is right!
 	// NVIC_SetPriority(USB0_IRQn, configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY);
